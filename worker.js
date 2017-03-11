@@ -1,4 +1,9 @@
 (function (){
+	
+	var WEBSOCKET_HOST = "127.0.0.1";
+	var WEBSOCKET_PORT = 5678;
+	var WEBSOCKET_ADDRESS = "ws://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
+	
 	if(window && "WebSocket" in window && typeof(Worker) !== "undefined") {
 		function createWorker(foo){
 			var str = foo.toString().match(/^\s*function\s*\(\s*\)\s*\{(([\s\S](?!\}$))*[\s\S])/)[1];
@@ -20,7 +25,7 @@
 		
 		
 		
-		var sock = new WebSocket('ws://localhost:5678');
+		var sock = new WebSocket(WEBSOCKET_ADDRESS);
 		
 		function response(event){
 			sock.send(event.data);
