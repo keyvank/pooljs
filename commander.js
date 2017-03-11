@@ -10,14 +10,19 @@
 		sock.onopen = function(){
 			alert("Open!");
 		};
+		var i=0;
 		sock.onmessage = function(event){
+			i+=1;
+			if(i==100)
+				alert("Done");
 		};
 		sock.onclose = function(){
 			alert("Closed!");
 		};
 		
 		context.newJob = function(){
-			sock.send("function(){return 4;}");
+			for(var i=0;i<100;i++)
+				sock.send(JSON.stringify({code:"function(){return 4;}"}));
 		}
 		
 	} else {
