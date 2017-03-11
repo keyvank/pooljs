@@ -13,7 +13,7 @@ COMMANDERS_SERVER_PORT = 5679
 jobs = asyncio.Queue()
 
 task_counter = 0
-task_queues = []
+task_queues = {}
 
 async def commanders_handler(websocket, path):
 	global task_counter
@@ -25,7 +25,7 @@ async def commanders_handler(websocket, path):
 		incoming = None
 		job_result = None
 		while True:
-			#print((len(id_websocket),len(websocket_queues)))
+			print(len(task_queues))
 			
 			if not incoming or incoming.done():
 				incoming = asyncio.ensure_future(websocket.recv()) # Wait for an incoming message
@@ -39,7 +39,7 @@ async def commanders_handler(websocket, path):
 
 			if incoming in done: # If there is a incoming message
 				obj = json.loads(incoming.result())
-				task_queues.append(websocket_queue)
+				task_queues[task_counter] = websocket_queue
 				await jobs.put({"id": task_counter, "code": obj["code"]})
 				task_counter += 1
 
@@ -54,7 +54,7 @@ async def workers_handler(websocket, path):
 		incoming = None
 		new_job = None
 		while True:
-			#print((len(id_websocket),len(websocket_queues)))
+			print(len(task_queues))
 			if not incoming or incoming.done():
 				incoming = asyncio.ensure_future(websocket.recv()) # Wait for an incoming message
 			if not new_job or new_job.done():
@@ -67,6 +67,7 @@ async def workers_handler(websocket, path):
 			if incoming in done: # If there is a incoming message
 				msg = json.loads(incoming.result())
 				await task_queues[msg["id"]].put(msg)
+				del task_queues[msg["id"]]
 
 			if new_job in done: # If there is a new job to send
 				job = new_job.result()

@@ -10,7 +10,7 @@
 		sock.onopen = function(){
 			alert("Open!");
 		};
-		var cnt=10000;
+		var cnt=100000;
 		var i=0;
 		sock.onmessage = function(event){
 			i+=1;
