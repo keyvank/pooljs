@@ -10,18 +10,21 @@
 		sock.onopen = function(){
 			alert("Open!");
 		};
+		var cnt=10000;
 		var i=0;
 		sock.onmessage = function(event){
 			i+=1;
-			if(i==100)
+			if(i==cnt){
 				alert("Done");
+			}
 		};
 		sock.onclose = function(){
 			alert("Closed!");
 		};
 		
 		context.newJob = function(){
-			for(var i=0;i<100;i++)
+			i=0;
+			for(var j=0;j<cnt;j++)
 				sock.send(JSON.stringify({code:"function(){return 4;}"}));
 		}
 		
