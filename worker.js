@@ -43,7 +43,6 @@
 		context.worker = {}
 		
 		sock.onopen = function(){
-			alert("Open!");
 		};
 		sock.onmessage = function(event){
 			var task = JSON.parse(event.data);
@@ -52,7 +51,6 @@
 			balance(task);
 		};
 		sock.onclose = function(){
-			alert("Closed!");
 		};
 		
 		

@@ -14,7 +14,6 @@
 		}
 		
 		sock.onopen = function(){
-			alert("Open!");
 		};
 		sock.onmessage = function(event){
 			if("onresult" in context.commander){
@@ -22,7 +21,6 @@
 			}
 		};
 		sock.onclose = function(){
-			alert("Closed!");
 		};
 		
 		

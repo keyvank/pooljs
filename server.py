@@ -18,39 +18,45 @@ task_counter = 0
 task_websockets = {}
 
 worker_websockets = set()
+commander_websockets = set()
 
+def print_info():
+	info_str = 'Workers: {}, Commanders: {}, Tasks: {}'.format(len(worker_websockets),len(commander_websockets),jobs.qsize()) + ' ' * 20
+	print(info_str,end='\r'*len(info_str))
 
 async def commanders_handler(websocket, path):
 	global task_counter
 	
+	commander_websockets.add(websocket)
 	websocket_queue = asyncio.Queue()
+	print_info()
 
 	try:
 		
 		incoming = None
 		job_result = None
 		while True:
-			print(len(task_websockets))
-			
 			obj = json.loads(await websocket.recv())
 			task_websockets[task_counter] = websocket
 			await jobs.put({"id": task_counter, "code": obj["code"]})
 			task_counter += 1
+			print_info()
 	except websockets.ConnectionClosed:
-		print("Commander left!")
+		commander_websockets.remove(websocket)
+		print_info()
 
 async def workers_handler(websocket, path):
 	worker_websockets.add(websocket)
+	print_info()
 	try:
 		while True:
-			print(len(task_websockets))
-
 			msg = json.loads(await websocket.recv())
 			await task_websockets[msg["id"]].send(json.dumps(msg))
 			del task_websockets[msg["id"]]
+			print_info()
 	except websockets.ConnectionClosed:
 		worker_websockets.remove(websocket)
-		print("Worker left")
+		print_info()
 
 async def balance_handler():
 	while True:
