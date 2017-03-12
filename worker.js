@@ -1,4 +1,4 @@
-(function (){
+(function (context){
 	
 	var WEBSOCKET_HOST = "127.0.0.1";
 	var WEBSOCKET_PORT = 5678;
@@ -40,18 +40,24 @@
 			w.postMessage(task);
 		}
 		
+		context.worker = {}
+		
 		sock.onopen = function(){
 			alert("Open!");
 		};
 		sock.onmessage = function(event){
 			var task = JSON.parse(event.data);
+			if(context.worker.onnewjob)
+				context.worker.onnewjob(task);
 			balance(task);
 		};
 		sock.onclose = function(){
 			alert("Closed!");
 		};
 		
+		
+		
 	} else {
 		alert("Your browser doesn't support Raisin!");
 	}
-}());
+}(this));

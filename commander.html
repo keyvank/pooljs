@@ -4,8 +4,19 @@
 		<title>Raisin Commander</title>
 		<meta charset="utf-8"/>
 		<script src="commander.js"></script>
+		<script>
+			commander.onresult = function(result){
+				document.getElementById("log").innerHTML += "New result (" + result.id + "): " + result.result + "\n<br>\n";
+			}
+			function bombJobs(){
+				for(var i = 0;i<1000;i++)
+					commander.newJob("function(){return 5;}");
+			}
+		</script>
 	</head>
 	<body>
-		<button onclick="newJob();">New Job!</button>
+		<button onclick="bombJobs();">Bomb 1000 jobs!</button>
+		<div id="log">
+		</div>
 	</body>
 </html>

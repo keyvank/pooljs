@@ -7,26 +7,25 @@
 		
 		var sock = new WebSocket(WEBSOCKET_ADDRESS);
 		
+		context.commander = {
+			newJob: function(code){
+				sock.send(JSON.stringify({code:code}));
+			}
+		}
+		
 		sock.onopen = function(){
 			alert("Open!");
 		};
-		var cnt=100000;
-		var i=0;
 		sock.onmessage = function(event){
-			i+=1;
-			if(i==cnt){
-				alert("Done");
+			if("onresult" in context.commander){
+				context.commander.onresult(JSON.parse(event.data));
 			}
 		};
 		sock.onclose = function(){
 			alert("Closed!");
 		};
 		
-		context.newJob = function(){
-			i=0;
-			for(var j=0;j<cnt;j++)
-				sock.send(JSON.stringify({code:"function(){return 4;}"}));
-		}
+		
 		
 	} else {
 		alert("Your browser doesn't support Raisin!");
