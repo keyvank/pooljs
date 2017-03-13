@@ -32,9 +32,6 @@ async def commanders_handler(websocket, path):
 	print_info()
 
 	try:
-		
-		incoming = None
-		job_result = None
 		while True:
 			obj = json.loads(await websocket.recv())
 			task_websockets[task_counter] = websocket
@@ -46,8 +43,10 @@ async def commanders_handler(websocket, path):
 		print_info()
 
 async def workers_handler(websocket, path):
+	
 	worker_websockets.add(websocket)
 	print_info()
+	
 	try:
 		while True:
 			msg = json.loads(await websocket.recv())
@@ -63,7 +62,6 @@ async def balance_handler():
 		job = await jobs.get()
 		websocket = random.sample(worker_websockets, 1)[0]
 		await websocket.send(json.dumps(job))
-
 
 workers_server = websockets.serve(workers_handler, WORKERS_SERVER_IP, WORKERS_SERVER_PORT)
 commanders_server = websockets.serve(commanders_handler, COMMANDERS_SERVER_IP, COMMANDERS_SERVER_PORT)
