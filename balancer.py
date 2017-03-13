@@ -11,11 +11,11 @@ WORKERS_SERVER_PORT = 12121
 COMMANDERS_SERVER_IP = '0.0.0.0'
 COMMANDERS_SERVER_PORT = 21212
 
-jobs = asyncio.Queue()
+job_queue = asyncio.Queue()
 results = asyncio.Queue()
 
-task_counter = 0
-task_websockets = {}
+job_counter = 0
+job_websockets = {}
 
 worker_websockets = set()
 commander_websockets = set()
@@ -23,11 +23,11 @@ commander_websockets = set()
 worker_exists = asyncio.Condition()
 
 def print_info():
-	info_str = 'Workers: {}, Commanders: {}, Tasks: {}'.format(len(worker_websockets),len(commander_websockets),jobs.qsize()) + ' ' * 20
+	info_str = 'Workers: {}, Commanders: {}, jobs: {}'.format(len(worker_websockets),len(commander_websockets),job_queue.qsize()) + ' ' * 20
 	print(info_str,end='\r'*len(info_str))
 
 async def commanders_handler(websocket, path):
-	global task_counter
+	global job_counter
 	
 	commander_websockets.add(websocket)
 	websocket_queue = asyncio.Queue()
@@ -36,9 +36,9 @@ async def commanders_handler(websocket, path):
 	try:
 		while True:
 			obj = json.loads(await websocket.recv())
-			task_websockets[task_counter] = websocket
-			await jobs.put({"id": task_counter, "code": obj["code"]})
-			task_counter += 1
+			job_websockets[job_counter] = websocket
+			await job_queue.put({"id": job_counter, "code": obj["code"]})
+			job_counter += 1
 			print_info()
 	except websockets.ConnectionClosed:
 		commander_websockets.remove(websocket)
@@ -56,8 +56,8 @@ async def workers_handler(websocket, path):
 	try:
 		while True:
 			msg = json.loads(await websocket.recv())
-			await task_websockets[msg["id"]].send(json.dumps(msg))
-			del task_websockets[msg["id"]]
+			await job_websockets[msg["id"]].send(json.dumps(msg))
+			del job_websockets[msg["id"]]
 			print_info()
 	except websockets.ConnectionClosed:
 		worker_websockets.remove(websocket)
@@ -68,7 +68,7 @@ async def workers_handler(websocket, path):
 async def balance_handler():
 	
 	while True:
-		job = await jobs.get()
+		job = await job_queue.get()
 		
 		await worker_exists.acquire()
 		await worker_exists.wait_for(lambda:len(worker_websockets) > 0)
