@@ -5,11 +5,11 @@ import websockets
 import json
 import random
 
-WORKERS_SERVER_IP = '127.0.0.1'
-WORKERS_SERVER_PORT = 5678
+WORKERS_SERVER_IP = '0.0.0.0'
+WORKERS_SERVER_PORT = 12121
 
-COMMANDERS_SERVER_IP = '127.0.0.1'
-COMMANDERS_SERVER_PORT = 5679
+COMMANDERS_SERVER_IP = '0.0.0.0'
+COMMANDERS_SERVER_PORT = 21212
 
 jobs = asyncio.Queue()
 results = asyncio.Queue()
