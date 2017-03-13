@@ -16,6 +16,7 @@ results = asyncio.Queue()
 
 job_counter = 0
 job_websockets = {}
+jobs = {}
 
 worker_websockets = set()
 commander_websockets = set()
@@ -23,7 +24,7 @@ commander_websockets = set()
 worker_exists = asyncio.Condition()
 
 def print_info():
-	info_str = 'Workers: {}, Commanders: {}, jobs: {}'.format(len(worker_websockets),len(commander_websockets),job_queue.qsize()) + ' ' * 20
+	info_str = 'Workers: {}, Commanders: {}, Jobs: {}'.format(len(worker_websockets),len(commander_websockets),job_queue.qsize()) + ' ' * 20
 	print(info_str,end='\r'*len(info_str))
 
 async def commanders_handler(websocket, path):
@@ -37,7 +38,8 @@ async def commanders_handler(websocket, path):
 		while True:
 			obj = json.loads(await websocket.recv())
 			job_websockets[job_counter] = websocket
-			await job_queue.put({"id": job_counter, "code": obj["code"]})
+			jobs[job_counter] = obj["code"]
+			await job_queue.put(job_counter)
 			job_counter += 1
 			print_info()
 	except websockets.ConnectionClosed:
@@ -45,6 +47,8 @@ async def commanders_handler(websocket, path):
 		print_info()
 
 async def workers_handler(websocket, path):
+	
+	websocket.jobs = [] # Add a new attribute for storing job ids
 	
 	await worker_exists.acquire()
 	worker_websockets.add(websocket)
@@ -56,11 +60,19 @@ async def workers_handler(websocket, path):
 	try:
 		while True:
 			msg = json.loads(await websocket.recv())
-			await job_websockets[msg["id"]].send(json.dumps(msg))
-			del job_websockets[msg["id"]]
+			job_id = msg["id"]
+			try:
+				await job_websockets[job_id].send(json.dumps({"id":job_id,"result":msg["result"]}))
+			except:
+				# Non of our business!
+			del job_websockets[job_id]
+			del jobs[job_id]
+			websocket.jobs.remove(job_id)
 			print_info()
 	except websockets.ConnectionClosed:
 		worker_websockets.remove(websocket)
+		for j in websocket.jobs:
+			await jobs.put(j)
 		print_info()
 	
 	
@@ -68,14 +80,19 @@ async def workers_handler(websocket, path):
 async def balance_handler():
 	
 	while True:
-		job = await job_queue.get()
-		
-		await worker_exists.acquire()
-		await worker_exists.wait_for(lambda:len(worker_websockets) > 0)
-		worker_exists.release()
-		websocket = random.sample(worker_websockets, 1)[0]
-		
-		await websocket.send(json.dumps(job))
+		try:
+			job = await job_queue.get()
+			
+			await worker_exists.acquire()
+			await worker_exists.wait_for(lambda:len(worker_websockets) > 0)
+			worker_exists.release()
+			websocket = random.sample(worker_websockets, 1)[0]
+			
+			await websocket.send(json.dumps({"id":job,"code":jobs[job]}))
+			websocket.jobs.append(job)
+		except websockets.ConnectionClosed:
+			await jobs.put(job)
+			
 	
 
 workers_server = websockets.serve(workers_handler, WORKERS_SERVER_IP, WORKERS_SERVER_PORT)
