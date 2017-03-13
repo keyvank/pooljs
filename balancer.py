@@ -20,8 +20,7 @@ task_websockets = {}
 worker_websockets = set()
 commander_websockets = set()
 
-worker_exists_lock = asyncio.Lock()
-worker_exists = asyncio.Condition(lock = worker_exists_lock)
+worker_exists = asyncio.Condition()
 
 def print_info():
 	info_str = 'Workers: {}, Commanders: {}, Tasks: {}'.format(len(worker_websockets),len(commander_websockets),jobs.qsize()) + ' ' * 20
