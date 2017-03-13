@@ -64,7 +64,7 @@ async def workers_handler(websocket, path):
 			try:
 				await job_websockets[job_id].send(json.dumps({"id":job_id,"result":msg["result"]}))
 			except:
-				# Non of our business!
+				pass # Non of our business!
 			del job_websockets[job_id]
 			del jobs[job_id]
 			websocket.jobs.remove(job_id)
