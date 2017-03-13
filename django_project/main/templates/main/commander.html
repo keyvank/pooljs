@@ -1,9 +1,12 @@
 <!DOCTYPE html>
+
+{% load staticfiles %}
+
 <html>
 	<head>
 		<title>Raisin Commander</title>
 		<meta charset="utf-8"/>
-		<script src="commander.js"></script>
+		<script src="{% static 'js/commander.js' %}"></script>
 		<script>
 			commander.onresult = function(result){
 				document.getElementById("log").innerHTML += "New result (" + result.id + "): " + result.result + "\n<br>\n";
