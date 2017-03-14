@@ -7,13 +7,7 @@
 		<title>Raisin Worker</title>
 		<meta charset="utf-8"/>
 		<script src="{% static 'js/worker.js' %}"></script>
-		<script>
-			worker.onnewjob = function(job){
-				document.getElementById("log").innerHTML += "New job (" + job.id + ")\n<br>\n";
-			}
-		</script>
 	</head>
 	<body>
-		<div id="log"></div>
 	</body>
 </html>

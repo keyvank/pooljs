@@ -25,7 +25,5 @@
 		
 		
 		
-	} else {
-		alert("Your browser doesn't support Raisin!");
 	}
 }(this));

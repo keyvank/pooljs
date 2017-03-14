@@ -46,16 +46,9 @@
 		};
 		sock.onmessage = function(event){
 			var task = JSON.parse(event.data);
-			if(context.worker.onnewjob)
-				context.worker.onnewjob(task);
 			balance(task);
 		};
 		sock.onclose = function(){
-		};
-		
-		
-		
-	} else {
-		alert("Your browser doesn't support Raisin!");
+		};	
 	}
 }(this));
