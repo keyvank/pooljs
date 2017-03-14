@@ -15,11 +15,11 @@
 			var worker = createWorker(function(){
 				var self = this;
 				this.addEventListener("message", function(event) {
-					var task = event.data;
-					var src = "var fn = " + task.code;
+					var job = event.data;
+					var src = "var fn = " + job.code;
 					eval(src);
-					var task_result = {"id":task.id,"result":fn.apply(this,task.args)};
-					self.postMessage(task_result);
+					var job_result = {"id":job.id,"result":fn.apply(this,job.args)};
+					self.postMessage(job_result);
 				}, false);
 			});
 			workerPool.push(worker);
@@ -30,14 +30,14 @@
 		var sock = new WebSocket(WEBSOCKET_ADDRESS);
 
 		function response(event){
-			var task_result = event.data;
-			sock.send(JSON.stringify(task_result));
+			var job_result = event.data;
+			sock.send(JSON.stringify(job_result));
 		}
 
-		function balance(task){
+		function balance(job){
 			var w = workerPool[Math.floor(Math.random()*workerPool.length)];
 			w.onmessage = response;
-			w.postMessage(task);
+			w.postMessage(job);
 		}
 
 		context.worker = {}
@@ -45,8 +45,8 @@
 		sock.onopen = function(){
 		};
 		sock.onmessage = function(event){
-			var task = JSON.parse(event.data);
-			balance(task);
+			var job = JSON.parse(event.data);
+			balance(job);
 		};
 		sock.onclose = function(){
 		};
