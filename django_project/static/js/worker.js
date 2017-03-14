@@ -18,7 +18,7 @@
 					var task = event.data;
 					var src = "var fn = " + task.code;
 					eval(src);
-					var task_result = {"id":task.id,"result":fn()};
+					var task_result = {"id":task.id,"result":fn.apply(this,[])};
 					self.postMessage(task_result);
 				}, false);
 			});
