@@ -27,7 +27,7 @@ def print_info():
 
 async def commanders_handler(websocket, path):
 	global job_counter
-	
+
 	commander_websockets.add(websocket)
 	websocket_queue = asyncio.Queue()
 	print_info()
@@ -44,16 +44,16 @@ async def commanders_handler(websocket, path):
 		print_info()
 
 async def workers_handler(websocket, path):
-	
+
 	websocket.jobs = [] # Add a new attribute for storing job ids
-	
+
 	await worker_exists.acquire()
 	worker_websockets.add(websocket)
 	worker_exists.notify_all()
 	worker_exists.release()
-	
+
 	print_info()
-	
+
 	try:
 		while True:
 			msg = json.loads(await websocket.recv())
@@ -69,27 +69,28 @@ async def workers_handler(websocket, path):
 		worker_websockets.remove(websocket)
 		for j in websocket.jobs:
 			await job_queue.put(j)
+		del websocket.jobs[:]
 		print_info()
-	
-	
+
+
 
 async def balance_handler():
-	
+
 	while True:
 		try:
 			job = await job_queue.get()
-			
+
 			await worker_exists.acquire()
 			await worker_exists.wait_for(lambda:len(worker_websockets) > 0)
 			worker_exists.release()
 			websocket = random.sample(worker_websockets, 1)[0]
-			
+
 			await websocket.send(json.dumps({"id":job,"code":jobs[job][0]}))
 			websocket.jobs.append(job)
 		except websockets.ConnectionClosed:
 			await job_queue.put(job)
-			
-	
+
+
 
 workers_server = websockets.serve(workers_handler, WORKERS_SERVER_IP, WORKERS_SERVER_PORT)
 commanders_server = websockets.serve(commanders_handler, COMMANDERS_SERVER_IP, COMMANDERS_SERVER_PORT)
