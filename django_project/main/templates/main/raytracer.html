@@ -37,16 +37,17 @@
 			}
 
 			function go(){
-				commander.for(0,20,function(ind){
+				commander.for(0,100,function(ind){
+					var x = ind%10,y = Math.floor(ind/10);
 					var data = [];
-					for(var i=0;i<480;i++){
+					for(var i=0;i<48;i++){
 						var row=[];
-						for(var j=0;j<32;j++){
-							row.push([i%255,(ind*32+j)%255,0]);
+						for(var j=0;j<64;j++){
+							row.push([(y*48+i)%255,(x*64+j)%255,0]);
 						}
 						data.push(row);
 					}
-					return [32*ind,0,data];
+					return [64*x,48*y,data];
 				});
 			}
 
