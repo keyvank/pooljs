@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+	<head>
+		<title>Raisin RayTracing</title>
+		<meta charset="utf-8"/>
+		<script src="{% static 'js/commander.js' %}"></script>
+
+	</head>
+	<body>
+		<canvas id="frame" width="640" height="480" style="border:1px solid #000000;">
+		</canvas>
+		<button onclick="go();">Run</button>
+	</body>
+	<script>
+		var ctx = document.getElementById("frame").getContext("2d");
+			function drawRegion(x,y,data){
+				var h=data.length;
+				var w=data[0].length;
+				var imgdata = ctx.getImageData(x,y, w, h);
+				for(var i=0;i<h;i++){
+					for(var j=0;j<w;j++){
+						var ind = i*w +j;
+						imgdata.data[ind*4]=data[i][j][0];
+						imgdata.data[ind*4+1]=data[i][j][1];
+						imgdata.data[ind*4+2]=data[i][j][2];
+						imgdata.data[ind*4+3]=255;
+					}
+				}
+				ctx.putImageData(imgdata,x,y);
+			}
+			commander.onresult = function(result){
+				drawRegion(result.result[0],result.result[1],result.result[2]);
+
+			}
+
+			function go(){
+				commander.for(0,20,function(ind){
+					var data = [];
+					for(var i=0;i<480;i++){
+						var row=[];
+						for(var j=0;j<32;j++){
+							row.push([i%255,(ind*32+j)%255,0]);
+						}
+						data.push(row);
+					}
+					return [32*ind,0,data];
+				});
+			}
+
+	</script>
+</html>

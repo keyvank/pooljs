@@ -8,3 +8,6 @@ def worker(request):
 
 def commander(request):
 	return render(request,'main/commander.html',{})
+
+def raytracer(request):
+	return render(request,'main/raytracer.html',{})
