@@ -11,14 +11,21 @@
 			commander.onresult = function(result){
 				document.getElementById("log").innerHTML += "New result (" + result.id + "): " + result.result + "\n<br>\n";
 			}
-			function bombJobs(){
-				for(var i = 0;i<1000;i++)
-					commander.newJob("function(){return 5;}");
+			function sendJobs(){
+					commander.run(function(arg1,arg2){
+						return arg1+arg2;
+					},[36,64]);
+					commander.for(0,5,function(i){
+						return i*i;
+					});
+					commander.forEach([[1,2],[2,3],[3,4],[4,5],[5,6]],function(a,b){
+						return a*b;
+					});
 			}
 		</script>
 	</head>
 	<body>
-		<button onclick="bombJobs();">Bomb 1000 jobs!</button>
+		<button onclick="sendJobs();">Send jobs!</button>
 		<div id="log">
 		</div>
 	</body>

@@ -35,9 +35,22 @@ async def commanders_handler(websocket, path):
 	try:
 		while True:
 			msg = json.loads(await websocket.recv())
-			jobs[job_counter] = (msg["code"],websocket)
-			await job_queue.put(job_counter)
-			job_counter += 1
+
+			if msg["type"] == "run":
+				jobs[job_counter] = (msg["code"],websocket,msg["args"])
+				await job_queue.put(job_counter)
+				job_counter += 1
+			elif msg["type"] == "for":
+				for i in range(msg["start"],msg["end"]):
+					jobs[job_counter] = (msg["code"],websocket,[i])
+					await job_queue.put(job_counter)
+					job_counter += 1
+			elif msg["type"] == "forEach":
+				for args in msg["argsList"]:
+					jobs[job_counter] = (msg["code"],websocket,args)
+					await job_queue.put(job_counter)
+					job_counter += 1
+
 			print_info()
 	except websockets.ConnectionClosed:
 		commander_websockets.remove(websocket)
@@ -85,7 +98,7 @@ async def balance_handler():
 			worker_exists.release()
 			websocket = random.sample(worker_websockets, 1)[0]
 
-			await websocket.send(json.dumps({"id":job,"code":jobs[job][0]}))
+			await websocket.send(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}))
 			websocket.jobs.append(job)
 		except websockets.ConnectionClosed:
 			await job_queue.put(job)
