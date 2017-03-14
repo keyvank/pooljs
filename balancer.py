@@ -12,10 +12,8 @@ COMMANDERS_SERVER_IP = '0.0.0.0'
 COMMANDERS_SERVER_PORT = 21212
 
 job_queue = asyncio.Queue()
-results = asyncio.Queue()
 
 job_counter = 0
-job_websockets = {}
 jobs = {}
 
 worker_websockets = set()
@@ -36,9 +34,8 @@ async def commanders_handler(websocket, path):
 
 	try:
 		while True:
-			obj = json.loads(await websocket.recv())
-			job_websockets[job_counter] = websocket
-			jobs[job_counter] = obj["code"]
+			msg = json.loads(await websocket.recv())
+			jobs[job_counter] = (msg["code"],websocket)
 			await job_queue.put(job_counter)
 			job_counter += 1
 			print_info()
@@ -62,17 +59,16 @@ async def workers_handler(websocket, path):
 			msg = json.loads(await websocket.recv())
 			job_id = msg["id"]
 			try:
-				await job_websockets[job_id].send(json.dumps({"id":job_id,"result":msg["result"]}))
+				await jobs[job_id][1].send(json.dumps({"id":job_id,"result":msg["result"]}))
 			except:
 				pass # Non of our business!
-			del job_websockets[job_id]
 			del jobs[job_id]
 			websocket.jobs.remove(job_id)
 			print_info()
 	except websockets.ConnectionClosed:
 		worker_websockets.remove(websocket)
 		for j in websocket.jobs:
-			await jobs.put(j)
+			await job_queue.put(j)
 		print_info()
 	
 	
@@ -88,10 +84,10 @@ async def balance_handler():
 			worker_exists.release()
 			websocket = random.sample(worker_websockets, 1)[0]
 			
-			await websocket.send(json.dumps({"id":job,"code":jobs[job]}))
+			await websocket.send(json.dumps({"id":job,"code":jobs[job][0]}))
 			websocket.jobs.append(job)
 		except websockets.ConnectionClosed:
-			await jobs.put(job)
+			await job_queue.put(job)
 			
 	
 
@@ -99,6 +95,8 @@ workers_server = websockets.serve(workers_handler, WORKERS_SERVER_IP, WORKERS_SE
 commanders_server = websockets.serve(commanders_handler, COMMANDERS_SERVER_IP, COMMANDERS_SERVER_PORT)
 
 loop = asyncio.get_event_loop()
+
+print_info()
 
 try:
 	loop.run_until_complete(asyncio.gather(workers_server,commanders_server,balance_handler()))
