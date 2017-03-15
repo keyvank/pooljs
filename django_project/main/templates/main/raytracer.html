@@ -33,22 +33,59 @@
 			}
 			commander.onresult = function(result){
 				drawRegion(result.result[0],result.result[1],result.result[2]);
-
 			}
 
+			var partsWidth = 40, partsHeight = 40;
+			var width = 640, height = 480;
 			function go(){
-				commander.for(0,100,function(ind){
-					var x = ind%10,y = Math.floor(ind/10);
+				commander.for(0,partsWidth*partsHeight,function(ind,width,height,partsWidth,partsHeight){
+					function dot(a,b){return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];}
+					function cross(a,b){return [a[1]*b[2] - a[2]*b[1],a[2]*b[0] - a[0]*b[2],a[0]*b[1] - a[1]*b[0]];}
+					function sum(a,b){return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
+					function neg(a){return [-a[0],-a[1],-a[2]];}
+					function sub(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+					function mul(a,b){return [a[0]*b,a[1]*b,a[2]*b];}
+					function normalize(a){var len = Math.sqrt(dot(a,a));return [a[0]/len,a[1]/len,a[2]/len];}
+
+					function lookAt(pos,targ,up=[0,1,0],fov=Math.PI/4,aspRatio=width/height){
+						var dir = normalize(sub(targ,pos));
+						targ = sum(pos,dir);
+						var w = Math.tan(fov);
+						var h = w/aspRatio;
+						var rightVec=normalize(cross(dir,up));
+						var downVec=normalize(cross(dir,rightVec));
+						var l = sub(targ,mul(rightVec,w/2));
+						var t = sub(targ,mul(downVec,h/2));
+						var lt = sum(l,t);
+						return [pos,lt,mul(rightVec,w),mul(downVec,h)];
+					}
+					var cam = lookAt([0,0,-100],[0,0,0]);
+					function traceRay(ray){
+						if(ray[1][1]>0)
+							return [0,0,0];
+						else
+							return [255,255,255];
+					}
+					function pixelAt(x,y){
+						var hor=mul(cam[2],x/width);
+						var ver=mul(cam[3],y/height);
+						var targ=sum(cam[1],sum(hor,ver));
+						var dir = normalize(sub(targ,cam[0]));
+						return traceRay([cam[0],dir]);
+					}
+					var x = ind%partsWidth,y = Math.floor(ind/partsWidth);
 					var data = [];
-					for(var i=0;i<48;i++){
+					var widthSize = width/partsWidth;
+					var heightSize = height/partsHeight;
+					for(var i=0;i<heightSize;i++){
 						var row=[];
-						for(var j=0;j<64;j++){
-							row.push([(y*48+i)%255,(x*64+j)%255,0]);
+						for(var j=0;j<widthSize;j++){
+							row.push(pixelAt(x*widthSize+j,y*heightSize+i));
 						}
 						data.push(row);
 					}
-					return [64*x,48*y,data];
-				});
+					return [widthSize*x,heightSize*y,data];
+				},[width,height,partsWidth,partsHeight]);
 			}
 
 	</script>
