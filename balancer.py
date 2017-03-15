@@ -85,7 +85,10 @@ async def workers_handler(websocket, path):
 		for j in websocket.jobs:
 			jobs[j][3]+=1
 			if jobs[j][3] > MAX_FAILURES:
-				await jobs[j][1].send(json.dumps({"id":j,"result":None,"error":True}))
+				try:
+					await jobs[j][1].send(json.dumps({"id":j,"result":None,"error":True}))
+				except:
+					pass # None of our business!
 				del jobs[j]
 			else:
 				await job_queue.put(j)
@@ -110,11 +113,13 @@ async def balance_handler():
 		except websockets.ConnectionClosed:
 			jobs[job][3]+=1
 			if jobs[job][3] > MAX_FAILURES:
-				await jobs[job][1].send(json.dumps({"id":job,"result":None,"error":True}))
+				try:
+					await jobs[job][1].send(json.dumps({"id":job,"result":None,"error":True}))
+				except:
+					pass # None of our business!
 				del jobs[job]
 			else:
 				await job_queue.put(job)
-
 
 
 
