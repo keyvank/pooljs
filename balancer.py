@@ -42,12 +42,12 @@ async def commanders_handler(websocket, path):
 				job_counter += 1
 			elif msg["type"] == "for":
 				for i in range(msg["start"],msg["end"]):
-					jobs[job_counter] = (msg["code"],websocket,[i])
+					jobs[job_counter] = (msg["code"],websocket,[i] + msg["extraArgs"])
 					await job_queue.put(job_counter)
 					job_counter += 1
 			elif msg["type"] == "forEach":
 				for args in msg["argsList"]:
-					jobs[job_counter] = (msg["code"],websocket,args)
+					jobs[job_counter] = (msg["code"],websocket,args + msg["extraArgs"])
 					await job_queue.put(job_counter)
 					job_counter += 1
 

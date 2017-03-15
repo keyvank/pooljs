@@ -11,11 +11,11 @@
 			run: function(func,args = []){
 				sock.send(JSON.stringify({type:"run", args:args, code:func.toString()}));
 			},
-			for: function(start,end,func){
-				sock.send(JSON.stringify({type:"for", start:start, end:end, code:func.toString()}));
+			for: function(start,end,func, extraArgs = []){
+				sock.send(JSON.stringify({type:"for", start:start, end:end, code:func.toString(),extraArgs:extraArgs}));
 			},
-			forEach: function(argsList,func){
-				sock.send(JSON.stringify({type:"forEach", argsList:argsList, code:func.toString()}));
+			forEach: function(argsList,func,extraArgs = []){
+				sock.send(JSON.stringify({type:"forEach", argsList:argsList, code:func.toString(), extraArgs:extraArgs}));
 			}
 		}
 
