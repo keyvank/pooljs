@@ -24,31 +24,32 @@
 			});
 			workerPool.push(worker);
 		}
-
-
-
-		var sock = new WebSocket(WEBSOCKET_ADDRESS);
-
-		function response(event){
-			var job_result = event.data;
-			sock.send(JSON.stringify(job_result));
-		}
-
-		function balance(job){
-			var w = workerPool[Math.floor(Math.random()*workerPool.length)];
-			w.onmessage = response;
-			w.postMessage(job);
-		}
-
 		context.worker = {}
 
-		sock.onopen = function(){
-		};
-		sock.onmessage = function(event){
-			var job = JSON.parse(event.data);
-			balance(job);
-		};
-		sock.onclose = function(){
-		};
+		function startSocket(){
+			var sock = new WebSocket(WEBSOCKET_ADDRESS);
+
+			function response(event){
+				var job_result = event.data;
+				sock.send(JSON.stringify(job_result));
+			}
+
+			function balance(job){
+				var w = workerPool[Math.floor(Math.random()*workerPool.length)];
+				w.onmessage = response;
+				w.postMessage(job);
+			}
+
+			sock.onopen = function(){
+			};
+			sock.onmessage = function(event){
+				var job = JSON.parse(event.data);
+				balance(job);
+			};
+			sock.onclose = function(){
+				setTimeout(startSocket,5000);
+			};
+		}
+		startSocket();
 	}
 }(this));
