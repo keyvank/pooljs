@@ -11,6 +11,8 @@ WORKERS_SERVER_PORT = 12121
 COMMANDERS_SERVER_IP = '0.0.0.0'
 COMMANDERS_SERVER_PORT = 21212
 
+MAX_FAILURES = 3
+
 job_queue = asyncio.Queue()
 
 job_counter = 0
@@ -37,17 +39,17 @@ async def commanders_handler(websocket, path):
 			msg = json.loads(await websocket.recv())
 
 			if msg["type"] == "run":
-				jobs[job_counter] = (msg["code"],websocket,msg["args"])
+				jobs[job_counter] = [msg["code"],websocket,msg["args"],0]
 				await job_queue.put(job_counter)
 				job_counter += 1
 			elif msg["type"] == "for":
 				for i in range(msg["start"],msg["end"]):
-					jobs[job_counter] = (msg["code"],websocket,[i] + msg["extraArgs"])
+					jobs[job_counter] = [msg["code"],websocket,[i] + msg["extraArgs"],0]
 					await job_queue.put(job_counter)
 					job_counter += 1
 			elif msg["type"] == "forEach":
 				for args in msg["argsList"]:
-					jobs[job_counter] = (msg["code"],websocket,args + msg["extraArgs"])
+					jobs[job_counter] = [msg["code"],websocket,args + msg["extraArgs"],0]
 					await job_queue.put(job_counter)
 					job_counter += 1
 
@@ -72,7 +74,7 @@ async def workers_handler(websocket, path):
 			msg = json.loads(await websocket.recv())
 			job_id = msg["id"]
 			try:
-				await jobs[job_id][1].send(json.dumps({"id":job_id,"result":msg["result"]}))
+				await jobs[job_id][1].send(json.dumps({"id":job_id,"result":msg["result"],"error":False}))
 			except:
 				pass # Non of our business!
 			del jobs[job_id]
@@ -81,7 +83,12 @@ async def workers_handler(websocket, path):
 	except websockets.ConnectionClosed:
 		worker_websockets.remove(websocket)
 		for j in websocket.jobs:
-			await job_queue.put(j)
+			jobs[j][3]+=1
+			if jobs[j][3] > MAX_FAILURES:
+				await jobs[j][1].send(json.dumps({"id":j,"result":None,"error":True}))
+				del jobs[j]
+			else:
+				await job_queue.put(j)
 		del websocket.jobs[:]
 		print_info()
 
@@ -101,7 +108,13 @@ async def balance_handler():
 			await websocket.send(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}))
 			websocket.jobs.append(job)
 		except websockets.ConnectionClosed:
-			await job_queue.put(job)
+			jobs[job][3]+=1
+			if jobs[job][3] > MAX_FAILURES:
+				await jobs[job][1].send(json.dumps({"id":job,"result":None,"error":True}))
+				del jobs[job]
+			else:
+				await job_queue.put(job)
+
 
 
 

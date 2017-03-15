@@ -32,7 +32,10 @@
 				ctx.putImageData(imgdata,x,y);
 			}
 			commander.onresult = function(result){
-				drawRegion(result.result[0],result.result[1],result.result[2]);
+				if(!result.error)
+					drawRegion(result.result[0],result.result[1],result.result[2]);
+				else
+					alert("There was an error with a job!");
 			}
 
 			var partsWidth = 40, partsHeight = 40;
