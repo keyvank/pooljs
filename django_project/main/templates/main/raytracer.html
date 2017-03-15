@@ -46,7 +46,6 @@
 					function sub(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
 					function mul(a,b){return [a[0]*b,a[1]*b,a[2]*b];}
 					function normalize(a){var len = Math.sqrt(dot(a,a));return [a[0]/len,a[1]/len,a[2]/len];}
-
 					function lookAt(pos,targ,up=[0,1,0],fov=Math.PI/4,aspRatio=width/height){
 						var dir = normalize(sub(targ,pos));
 						targ = sum(pos,dir);
@@ -54,17 +53,34 @@
 						var h = w/aspRatio;
 						var rightVec=normalize(cross(dir,up));
 						var downVec=normalize(cross(dir,rightVec));
-						var l = sub(targ,mul(rightVec,w/2));
-						var t = sub(targ,mul(downVec,h/2));
-						var lt = sum(l,t);
+						var lt = sub(targ,sum(mul(rightVec,w/2),mul(downVec,h/2)));
 						return [pos,lt,mul(rightVec,w),mul(downVec,h)];
 					}
-					var cam = lookAt([0,0,-100],[0,0,0]);
-					function traceRay(ray){
-						if(ray[1][1]>0)
-							return [0,0,0];
+					var cam = lookAt([0,0,-100],[0,0,-99]);
+
+					// Plane => [Normal,Position]
+					// Ray => [Pos,Dir]
+					function planeIntersection(plane,ray){
+						var d = -dot(plane[0],ray[1]);
+
+						if(d>0){
+							var t = (plane[1] +dot(plane[0],ray[0]))/d;
+							if(t>=0){
+								var pos = sum(ray[0],mul(ray[1],t));
+								if((Math.floor(pos[2]/100)+Math.floor(pos[0]/100))%2==0)
+									return [255,255,255];
+								else
+									return [20,20,20];
+							}
+							else
+								return [0,0,0];
+						}
 						else
-							return [255,255,255];
+							return [0,0,0];
+					}
+
+					function traceRay(ray){
+						return planeIntersection([[0,1,0],100],ray);
 					}
 					function pixelAt(x,y){
 						var hor=mul(cam[2],x/width);
@@ -87,6 +103,5 @@
 					return [widthSize*x,heightSize*y,data];
 				},[width,height,partsWidth,partsHeight]);
 			}
-
 	</script>
 </html>
