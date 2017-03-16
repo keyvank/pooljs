@@ -105,7 +105,8 @@ class CommanderProtocol(WebSocketServerProtocol):
 
 		print_info()
 
-	@asyncio.coroutinedef onClose(self, wasClean, code, reason):
+	@asyncio.coroutine
+	def onClose(self, wasClean, code, reason):
 		commander_websockets.remove(self)
 		print_info()
 
