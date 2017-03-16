@@ -113,7 +113,7 @@ async def balance_handler():
 
 
 ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-ssl_ctx.load_cert_chain(certfile="/home/keyvan/Desktop/cert.pem") 
+ssl_ctx.load_cert_chain(certfile="cert.pem") 
 ssl_ctx.set_ciphers('RSA')
 
 workers_server = websockets.serve(workers_handler, WORKERS_SERVER_IP, WORKERS_SERVER_PORT)
