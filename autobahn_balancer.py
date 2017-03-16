@@ -24,7 +24,7 @@ commander_websockets = set()
 worker_exists = asyncio.Condition()
 
 def print_info():
-	info_str = 'Workers: {}, Commanders: {}, Jobs: {}'.format(len(worker_websockets),len(commander_websockets),job_queue.qsize()) + ' ' * 20
+	info_str = 'Workers: {}, Commanders: {}, Jobs: {}'.format(len(worker_websockets),len(commander_websockets),job_queue.qsize())  + ' ' * 20
 	print(info_str,end='\r'*len(info_str))
 
 
@@ -135,5 +135,12 @@ if __name__ == '__main__':
 	print_info()
 
 	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler())
-	server = loop.run_until_complete(all_tasks)
-	loop.run_forever()
+	try:
+		server = loop.run_until_complete(all_tasks)
+	except KeyboardInterrupt:
+		print()
+		all_tasks.cancel()
+		loop.run_forever()
+		all_tasks.exception()
+	finally:
+		loop.close()
