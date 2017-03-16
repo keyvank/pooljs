@@ -112,10 +112,6 @@ async def balance_handler():
 		await websocket.send(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}))
 
 
-ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-ssl_ctx.load_cert_chain(certfile="cert.pem") 
-ssl_ctx.set_ciphers('RSA')
-
 workers_server = websockets.serve(workers_handler, WORKERS_SERVER_IP, WORKERS_SERVER_PORT)
 commanders_server = websockets.serve(commanders_handler, COMMANDERS_SERVER_IP, COMMANDERS_SERVER_PORT)
 
