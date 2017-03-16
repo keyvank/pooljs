@@ -84,7 +84,8 @@ class CommanderProtocol(WebSocketServerProtocol):
 		websocket_queue = asyncio.Queue()
 		print_info()
 
-	@asyncio.coroutinedef onMessage(self, payload, isBinary):
+	@asyncio.coroutine
+	def onMessage(self, payload, isBinary):
 		global job_counter
 		msg = json.loads(payload.decode('utf8'))
 
