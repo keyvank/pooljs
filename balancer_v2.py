@@ -102,14 +102,14 @@ if __name__ == '__main__':
 	loop = asyncio.get_event_loop()
 	
 	ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-	ssl_ctx.load_cert_chain(certfile='pooljs.crt',keyfile='/home/keyvan/Desktop/cl/pooljs.key')
+	ssl_ctx.load_cert_chain(certfile='pooljs.crt',keyfile='pooljs.key')
 	
 	commanderFactory = WebSocketServerFactory()
 	commanderFactory.protocol = CommanderProtocol
-	commanderCoro = loop.create_server(commanderFactory, '0.0.0.0', 21212,ssl=ctx)
+	commanderCoro = loop.create_server(commanderFactory, '0.0.0.0', 21212,ssl=ssl_ctx)
 	workerFactory = WebSocketServerFactory()
 	workerFactory.protocol = WorkerProtocol
-	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ctx)
+	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ssl_ctx)
 	print_info()
 	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler())
 	try:
