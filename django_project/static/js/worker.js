@@ -1,8 +1,8 @@
 (function (context){
 
-	var WEBSOCKET_HOST = "127.0.0.1";
+	var WEBSOCKET_HOST = "www.codelearnr.com";
 	var WEBSOCKET_PORT = 12121;
-	var WEBSOCKET_ADDRESS = "ws://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
+	var WEBSOCKET_ADDRESS = "wss://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
 
 	if(window && "WebSocket" in window && typeof(Worker) !== "undefined") {
 		function createWorker(foo){

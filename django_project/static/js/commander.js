@@ -1,9 +1,9 @@
 (function (context){
 	if(window && "WebSocket" in window) {
 
-		var WEBSOCKET_HOST = "127.0.0.1";
+		var WEBSOCKET_HOST = "www.codelearnr.com";
 		var WEBSOCKET_PORT = 21212;
-		var WEBSOCKET_ADDRESS = "ws://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
+		var WEBSOCKET_ADDRESS = "wss://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
 
 		var sock = new WebSocket(WEBSOCKET_ADDRESS);
 
