@@ -1,7 +1,7 @@
 (function (context){
 	if(window && "WebSocket" in window) {
 
-		var WEBSOCKET_HOST = "www.codelearnr.com";
+		var WEBSOCKET_HOST = "pooljs.ir";
 		var WEBSOCKET_PORT = 21212;
 		var WEBSOCKET_ADDRESS = "wss://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
 

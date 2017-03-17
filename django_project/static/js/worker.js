@@ -1,6 +1,6 @@
 (function (context){
 
-	var WEBSOCKET_HOST = "www.codelearnr.com";
+	var WEBSOCKET_HOST = "pooljs.ir";
 	var WEBSOCKET_PORT = 12121;
 	var WEBSOCKET_ADDRESS = "wss://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
 
