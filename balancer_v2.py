@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from autobahn.@asyncio.coroutineio.websocket import WebSocketServerProtocol, WebSocketServerFactory
-import @asyncio.coroutineio
+from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
+import asyncio
 import json
 import random
 WORKERS_SERVER_IP = '0.0.0.0'
@@ -8,12 +8,12 @@ WORKERS_SERVER_PORT = 12121
 COMMANDERS_SERVER_IP = '0.0.0.0'
 COMMANDERS_SERVER_PORT = 21212
 MAX_FAILURES = 3
-job_queue = @asyncio.coroutineio.Queue()
+job_queue = asyncio.Queue()
 job_counter = 0
 jobs = {}
 worker_websockets = set()
 commander_websockets = set()
-worker_exists = @asyncio.coroutineio.Condition()
+worker_exists = asyncio.Condition()
 def print_info():
 	info_str = 'Workers: {}, Commanders: {}, Jobs: {}'.format(len(worker_websockets),len(commander_websockets),job_queue.qsize())  + ' ' * 20
 	print(info_str,end='\r'*len(info_str))
@@ -61,7 +61,7 @@ class CommanderProtocol(WebSocketServerProtocol):
 	def onOpen(self):
 		global job_counter
 		commander_websockets.add(self)
-		websocket_queue = @asyncio.coroutineio.Queue()
+		websocket_queue = asyncio.Queue()
 		print_info()
 	@asyncio.coroutine
 	def onMessage(self, payload, isBinary):
@@ -97,9 +97,9 @@ def balance_handler():
 		websocket.sendMessage(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}).encode('utf-8'),False)
 		websocket.jobs.append(job)
 if __name__ == '__main__':
-	import @asyncio.coroutineio
+	import asyncio
 	import ssl
-	loop = @asyncio.coroutineio.get_event_loop()
+	loop = asyncio.get_event_loop()
 	
 	ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 	ssl_ctx.load_cert_chain(certfile='pooljs.crt',keyfile='/home/keyvan/Desktop/cl/pooljs.key')
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 	workerFactory.protocol = WorkerProtocol
 	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ctx)
 	print_info()
-	all_tasks = @asyncio.coroutineio.gather(commanderCoro,workerCoro,balance_handler())
+	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler())
 	try:
 		server = loop.run_until_complete(all_tasks)
 	except KeyboardInterrupt:
