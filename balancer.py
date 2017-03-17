@@ -95,7 +95,7 @@ if __name__ == '__main__':
 	loop = asyncio.get_event_loop()
 	
 	ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-	ssl_ctx.load_cert_chain(certfile='pooljs.crt',keyfile='pooljs.key')
+	ssl_ctx.load_cert_chain(certfile='/etc/letsencrypt/live/pooljs.ir/cert.pem',keyfile='/etc/letsencrypt/live/pooljs.ir/privkey.pem')
 	
 	commanderFactory = WebSocketServerFactory()
 	commanderFactory.protocol = CommanderProtocol
