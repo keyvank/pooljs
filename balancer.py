@@ -66,8 +66,15 @@ class WorkerProtocol(WebSocketServerProtocol):
 class CommanderProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
 	    pass
+
+
+	def onPong(self, payload):
+		self.last_pong_time = int(time.time())
+	
 	async def onOpen(self):
 		global job_counter
+		self.last_ping_time = None
+		self.last_pong_time = None
 		self.buff = []
 		self.buff_size = 1
 		commander_websockets.add(self)
@@ -125,7 +132,8 @@ class CommanderProtocol(WebSocketServerProtocol):
 				self.flush()
 		print_info()
 	async def onClose(self, wasClean, code, reason):
-		commander_websockets.remove(self)
+		if self in commander_websockets:
+			commander_websockets.remove(self)
 		print_info()
 async def balance_handler():
 	while True:
@@ -154,6 +162,15 @@ async def watcher_handler():
 					ws.last_ping_time = int(time.time())
 			else:
 				ws.last_ping_time = None
+		for ws in commander_websockets:
+			if ws.last_ping_time:
+				if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
+					elapsed = int(time.time()) - ws.last_ping_time
+					if elapsed > MAX_PONG_TIME:
+						ws.sendClose()
+			else:
+				ws.sendPing()
+				ws.last_ping_time = int(time.time())
 		await asyncio.sleep(PING_INTERVAL)
 		
 if __name__ == '__main__':
