@@ -99,7 +99,6 @@ async def balance_handler():
 		await worker_exists.wait_for(lambda:len(worker_websockets) > 0)
 		worker_exists.release()
 		websocket = random.sample(worker_websockets, 1)[0]
-		websocket.sendPing()
 		websocket.sendMessage(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}).encode('utf-8'),False)
 		
 		websocket.jobs.append(job)
@@ -113,7 +112,7 @@ async def watcher_handler():
 					if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
 						elapsed = int(time.time()) - ws.last_ping_time
 						if elapsed > MAX_PONG_TIME:
-							ws.send_close()
+							ws.sendClose()
 				else:
 					ws.sendPing()
 					ws.last_ping_time = int(time.time())
@@ -128,7 +127,7 @@ if __name__ == '__main__':
 	
 	ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 	ssl_ctx.load_cert_chain(certfile='/etc/letsencrypt/live/pooljs.ir/cert.pem',keyfile='/etc/letsencrypt/live/pooljs.ir/privkey.pem')
-	#ssl_ctx = None
+	ssl_ctx = None
 	
 	commanderFactory = WebSocketServerFactory()
 	commanderFactory.protocol = CommanderProtocol
@@ -137,7 +136,7 @@ if __name__ == '__main__':
 	workerFactory.protocol = WorkerProtocol
 	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ssl_ctx)
 	print_info()
-	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler(),watcher_handler())
+	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler())
 	try:
 		server = loop.run_until_complete(all_tasks)
 	except KeyboardInterrupt:
