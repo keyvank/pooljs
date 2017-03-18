@@ -146,35 +146,24 @@ async def balance_handler():
 		
 		websocket.jobs.append(job)
 		
+async def close_unavailable_sockets(socks):
+	for ws in socks:
+		if ws.last_ping_time:
+			if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
+				elapsed = int(time.time()) - ws.last_ping_time
+				if elapsed > MAX_PONG_TIME:
+					ws.sendClose()
+					await ws.cleanup()
+			elif ws.last_pong_time:
+				ws.last_ping_time = None
+		else:
+			ws.sendPing()
+			ws.last_ping_time = int(time.time())
 
 async def watcher_handler():
 	while True:
-		for ws in worker_websockets:
-			if len(ws.jobs) > 0:
-				if ws.last_ping_time:
-					if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
-						elapsed = int(time.time()) - ws.last_ping_time
-						if elapsed > MAX_PONG_TIME:
-							ws.sendClose()
-							await ws.cleanup()
-					elif ws.last_pong_time:
-						ws.last_ping_time = None
-				else:
-					ws.sendPing()
-					ws.last_ping_time = int(time.time())
-			else:
-				ws.last_ping_time = None
-		for ws in commander_websockets:
-			if ws.last_ping_time:
-				if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
-					elapsed = int(time.time()) - ws.last_ping_time
-					if elapsed > MAX_PONG_TIME:
-						ws.sendClose()
-				elif ws.last_pong_time:
-					ws.last_ping_time = None
-			else:
-				ws.sendPing()
-				ws.last_ping_time = int(time.time())
+		await close_unavailable_sockets(worker_websockets)
+		await close_unavailable_sockets(commander_websockets)
 		await asyncio.sleep(PING_INTERVAL)
 		
 if __name__ == '__main__':
