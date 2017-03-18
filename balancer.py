@@ -139,6 +139,7 @@ async def watcher_handler():
 					if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
 						elapsed = int(time.time()) - ws.last_ping_time
 						if elapsed > MAX_PONG_TIME:
+							ws.sendClose()
 							await ws.cleanup()
 				else:
 					ws.sendPing()
