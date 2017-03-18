@@ -3,10 +3,15 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerF
 import asyncio
 import json
 import random
+import time
 WORKERS_SERVER_IP = '0.0.0.0'
 WORKERS_SERVER_PORT = 12121
 COMMANDERS_SERVER_IP = '0.0.0.0'
 COMMANDERS_SERVER_PORT = 21212
+
+MAX_PONG_TIME = 3 # Seconds
+PING_INTERVAL = 5 # Seconds
+
 MAX_FAILURES = 3
 job_queue = asyncio.Queue()
 job_counter = 0
@@ -20,7 +25,13 @@ def print_info():
 class WorkerProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
 	    pass
+
+	def onPong(self, payload):
+		self.last_pong_time = int(time.time())
+		
 	async def onOpen(self):
+		self.last_ping_time = None
+		self.last_pong_time = None
 		self.jobs = [] # Add a new attribute for storing job ids
 		await worker_exists.acquire()
 		worker_websockets.add(self)
@@ -37,6 +48,7 @@ class WorkerProtocol(WebSocketServerProtocol):
 		del jobs[job_id]
 		self.jobs.remove(job_id)
 		print_info()
+	
 	async def onClose(self, wasClean, code, reason):
 		worker_websockets.remove(self)
 		for j in self.jobs:
@@ -87,8 +99,28 @@ async def balance_handler():
 		await worker_exists.wait_for(lambda:len(worker_websockets) > 0)
 		worker_exists.release()
 		websocket = random.sample(worker_websockets, 1)[0]
+		websocket.sendPing()
 		websocket.sendMessage(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}).encode('utf-8'),False)
+		
 		websocket.jobs.append(job)
+		
+
+async def watcher_handler():
+	while True:
+		for ws in worker_websockets:
+			if len(ws.jobs) > 0:
+				if ws.last_ping_time:
+					if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
+						elapsed = int(time.time()) - ws.last_ping_time
+						if elapsed > MAX_PONG_TIME:
+							ws.send_close()
+				else:
+					ws.sendPing()
+					ws.last_ping_time = int(time.time())
+			else:
+				ws.last_ping_time = None
+		await asyncio.sleep(PING_INTERVAL)
+		
 if __name__ == '__main__':
 	import asyncio
 	import ssl
@@ -96,6 +128,7 @@ if __name__ == '__main__':
 	
 	ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 	ssl_ctx.load_cert_chain(certfile='/etc/letsencrypt/live/pooljs.ir/cert.pem',keyfile='/etc/letsencrypt/live/pooljs.ir/privkey.pem')
+	#ssl_ctx = None
 	
 	commanderFactory = WebSocketServerFactory()
 	commanderFactory.protocol = CommanderProtocol
@@ -104,7 +137,7 @@ if __name__ == '__main__':
 	workerFactory.protocol = WorkerProtocol
 	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ssl_ctx)
 	print_info()
-	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler())
+	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler(),watcher_handler())
 	try:
 		server = loop.run_until_complete(all_tasks)
 	except KeyboardInterrupt:
