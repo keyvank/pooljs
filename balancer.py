@@ -47,14 +47,15 @@ class WorkerProtocol(WebSocketServerProtocol):
 		print_info()
 	
 	async def cleanup(self):
-		for j in self.jobs:
-			jobs[j][3]+=1
-			if jobs[j][3] > MAX_FAILURES:
-				jobs[j][1].result_available(j,None,True)
-				del jobs[j]
-			else:
-				await job_queue.put(j)
-		del self.jobs[:]
+		if hasattr(self,"jobs"):
+			for j in self.jobs:
+				self.jobs[j][3]+=1
+				if self.jobs[j][3] > MAX_FAILURES:
+					self.jobs[j][1].result_available(j,None,True)
+					del self.jobs[j]
+				else:
+					await job_queue.put(j)
+			del self.jobs[:]
 		print_info()
 	
 	async def onClose(self, wasClean, code, reason):
