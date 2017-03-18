@@ -23,7 +23,12 @@
 		};
 		sock.onmessage = function(event){
 			if("onresult" in context.commander){
-				context.commander.onresult(JSON.parse(event.data));
+				var result = JSON.parse(event.data);
+				if(result.error)
+					context.commander.onresult(null,true);
+				else
+					for(var i=0;i<result.results.length;i++)
+						context.commander.onresult(result.results[i]);
 			}
 		};
 		sock.onclose = function(){

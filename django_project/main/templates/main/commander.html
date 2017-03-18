@@ -9,7 +9,7 @@
 		<script src="{% static 'js/commander.js' %}"></script>
 		<script>
 			commander.onresult = function(result){
-				document.getElementById("log").innerHTML += "New result (" + result.id + "): " + result.result + "\n<br>\n";
+				document.getElementById("log").innerHTML += "New result: " + result + "\n<br>\n";
 			}
 			function sendJobs(){
 					commander.run(function(arg1,arg2){

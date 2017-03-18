@@ -41,10 +41,7 @@ class WorkerProtocol(WebSocketServerProtocol):
 	async def onMessage(self, payload, isBinary):
 		msg = json.loads(payload.decode('utf8'))
 		job_id = msg["id"]
-		try:
-			jobs[job_id][1].sendMessage(json.dumps({"id":job_id,"result":msg["result"],"error":False}).encode('utf-8'),False)
-		except:
-			pass # Non of our business!
+		jobs[job_id][1].result_available(job_id,msg["result"],False)
 		del jobs[job_id]
 		self.jobs.remove(job_id)
 		print_info()
@@ -53,10 +50,7 @@ class WorkerProtocol(WebSocketServerProtocol):
 		for j in self.jobs:
 			jobs[j][3]+=1
 			if jobs[j][3] > MAX_FAILURES:
-				try:
-					jobs[j][1].sendMessage(json.dumps({"id":j,"result":None,"error":True}).encode('utf-8'),False)
-				except:
-					pass # None of our business!
+				jobs[j][1].result_available(j,None,True)
 				del jobs[j]
 			else:
 				await job_queue.put(j)
@@ -74,9 +68,20 @@ class CommanderProtocol(WebSocketServerProtocol):
 	    pass
 	async def onOpen(self):
 		global job_counter
+		self.buff = []
+		self.buff_size = 1
 		commander_websockets.add(self)
 		websocket_queue = asyncio.Queue()
 		print_info()
+	
+	def result_available(self,job_id,result,error):
+		try:
+			if error:
+				self.sendMessage(json.dumps({"results":None,"error":True}).encode('utf-8'),False)
+			else:
+				self.sendMessage(json.dumps({"results":[result],"error":False}).encode('utf-8'),False)
+		except:
+			pass # Non of our business!
 	async def onMessage(self, payload, isBinary):
 		global job_counter
 		msg = json.loads(payload.decode('utf8'))
