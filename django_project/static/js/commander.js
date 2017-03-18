@@ -22,19 +22,29 @@
 			},
 			flush: function(){
 				sock.send(JSON.stringify({type:"flush"}));
+			},
+			info: function(){
+				sock.send(JSON.stringify({type:"info"}));
 			}
 		}
 
 		sock.onopen = function(){
 		};
 		sock.onmessage = function(event){
-			if("onresult" in context.commander){
-				var result = JSON.parse(event.data);
-				if(result.error)
-					context.commander.onresult(null,true);
-				else
-					for(var i=0;i<result.results.length;i++)
-						context.commander.onresult(result.results[i]);
+			var msg = JSON.parse(event.data);
+			if(msg.type == "result"){
+				if("onresult" in context.commander){
+					if(msg.error)
+						context.commander.onresult(null,true);
+					else
+						for(var i=0;i<msg.results.length;i++)
+							context.commander.onresult(msg.results[i]);
+				}
+			}
+			else if(msg.type == "info"){
+				if("oninfo" in context.commander){
+					context.commander.oninfo(msg.workersCount);
+				}
 			}
 		};
 		sock.onclose = function(){

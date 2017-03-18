@@ -77,7 +77,7 @@ class CommanderProtocol(WebSocketServerProtocol):
 	def result_available(self,job_id,result,error):		
 		if error:
 			try:
-				self.sendMessage(json.dumps({"results":None,"error":True}).encode('utf-8'),False)
+				self.sendMessage(json.dumps({"type":"result","results":None,"error":True}).encode('utf-8'),False)
 			except:
 				pass # Non of our business!
 		else:
@@ -87,8 +87,14 @@ class CommanderProtocol(WebSocketServerProtocol):
 	
 	def flush(self):
 		try:
-			self.sendMessage(json.dumps({"results":self.buff,"error":False}).encode('utf-8'),False)
+			self.sendMessage(json.dumps({"type":"result","results":self.buff,"error":False}).encode('utf-8'),False)
 			del self.buff[:]
+		except:
+			pass # Non of our business!
+	
+	def info(self):
+		try:
+			self.sendMessage(json.dumps({"type":"info","workersCount":len(worker_websockets)}).encode('utf-8'),False)
 		except:
 			pass # Non of our business!
 	
@@ -111,6 +117,8 @@ class CommanderProtocol(WebSocketServerProtocol):
 				job_counter += 1
 		elif msg["type"] == "flush":
 			self.flush()
+		elif msg["type"] == "info":
+			self.info()
 		elif msg["type"] == "set":
 			if msg["property"] == "bufferSize":
 				self.buff_size = msg["value"]

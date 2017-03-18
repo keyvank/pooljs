@@ -13,6 +13,7 @@
 		<canvas id="frame" width="640" height="480" style="border:1px solid #000000;">
 		</canvas>
 		<button onclick="go();">Run</button>
+		<button onclick="info();">Info</button>
 	</body>
 	<script>
 		var ctx = document.getElementById("frame").getContext("2d");
@@ -106,6 +107,12 @@
 					}
 					return [widthSize*x,heightSize*y,data];
 				},[width,height,partsWidth,partsHeight]);
+			}
+			function info(){
+				commander.oninfo = function(workersCount){
+					alert("Workers: " + workersCount);
+				}
+				commander.info();
 			}
 	</script>
 </html>
