@@ -64,7 +64,8 @@ class WorkerProtocol(WebSocketServerProtocol):
 		print_info()
 	
 	async def onClose(self, wasClean, code, reason):
-		worker_websockets.remove(self)
+		if self in worker_websockets:
+			worker_websockets.remove(self)
 		await self.cleanup()
 		print_info()
 
