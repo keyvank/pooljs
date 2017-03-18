@@ -157,6 +157,8 @@ async def watcher_handler():
 						if elapsed > MAX_PONG_TIME:
 							ws.sendClose()
 							await ws.cleanup()
+					elif ws.last_pong_time:
+						ws.last_ping_time = None
 				else:
 					ws.sendPing()
 					ws.last_ping_time = int(time.time())
@@ -168,6 +170,8 @@ async def watcher_handler():
 					elapsed = int(time.time()) - ws.last_ping_time
 					if elapsed > MAX_PONG_TIME:
 						ws.sendClose()
+				elif ws.last_pong_time:
+					ws.last_ping_time = None
 			else:
 				ws.sendPing()
 				ws.last_ping_time = int(time.time())
@@ -189,7 +193,7 @@ if __name__ == '__main__':
 	workerFactory.protocol = WorkerProtocol
 	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ssl_ctx)
 	print_info()
-	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler())
+	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler(),watcher_handler())
 	try:
 		server = loop.run_until_complete(all_tasks)
 	except KeyboardInterrupt:
