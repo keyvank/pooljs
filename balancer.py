@@ -153,7 +153,6 @@ async def close_unavailable_sockets(socks):
 				elapsed = int(time.time()) - ws.last_ping_time
 				if elapsed > MAX_PONG_TIME:
 					ws.sendClose()
-					await ws.cleanup()
 			elif ws.last_pong_time:
 				ws.last_ping_time = None
 		else:
