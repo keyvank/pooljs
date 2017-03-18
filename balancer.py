@@ -49,13 +49,12 @@ class WorkerProtocol(WebSocketServerProtocol):
 	async def cleanup(self):
 		if hasattr(self,"jobs"):
 			for j in self.jobs:
-				if j in jobs: # Notice this
-					jobs[j][3]+=1
-					if jobs[j][3] > MAX_FAILURES:
-						jobs[j][1].result_available(j,None,True)
-						del jobs[j]
-					else:
-						await job_queue.put(j)
+				jobs[j][3]+=1
+				if jobs[j][3] > MAX_FAILURES:
+					jobs[j][1].result_available(j,None,True)
+					del jobs[j]
+				else:
+					await job_queue.put(j)
 			del self.jobs[:]
 		print_info()
 	
