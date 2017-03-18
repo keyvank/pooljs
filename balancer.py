@@ -49,8 +49,7 @@ class WorkerProtocol(WebSocketServerProtocol):
 		self.jobs.remove(job_id)
 		print_info()
 	
-	async def onClose(self, wasClean, code, reason):
-		worker_websockets.remove(self)
+	async def cleanup(self):
 		for j in self.jobs:
 			jobs[j][3]+=1
 			if jobs[j][3] > MAX_FAILURES:
@@ -63,6 +62,12 @@ class WorkerProtocol(WebSocketServerProtocol):
 				await job_queue.put(j)
 		del self.jobs[:]
 		print_info()
+	
+	async def onClose(self, wasClean, code, reason):
+		worker_websockets.remove(self)
+		await self.cleanup()
+		print_info()
+
 class CommanderProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
 	    pass
@@ -112,7 +117,7 @@ async def watcher_handler():
 					if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
 						elapsed = int(time.time()) - ws.last_ping_time
 						if elapsed > MAX_PONG_TIME:
-							ws.sendClose()
+							await ws.cleanup()
 				else:
 					ws.sendPing()
 					ws.last_ping_time = int(time.time())
