@@ -41,6 +41,7 @@
 			var partsWidth = 40, partsHeight = 40;
 			var width = 640, height = 480;
 			function go(){
+				commander.setBufferSize(100);
 				commander.for(0,partsWidth*partsHeight,function(ind,width,height,partsWidth,partsHeight){
 					function dot(a,b){return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];}
 					function cross(a,b){return [a[1]*b[2] - a[2]*b[1],a[2]*b[0] - a[0]*b[2],a[0]*b[1] - a[1]*b[0]];}

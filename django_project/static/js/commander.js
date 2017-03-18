@@ -16,6 +16,12 @@
 			},
 			forEach: function(argsList,func,extraArgs = []){
 				sock.send(JSON.stringify({type:"forEach", argsList:argsList, code:func.toString(), extraArgs:extraArgs}));
+			},
+			setBufferSize: function(size){
+				sock.send(JSON.stringify({type:"set", property:"bufferSize", value:size}));
+			},
+			flush: function(){
+				sock.send(JSON.stringify({type:"flush"}));
 			}
 		}
 

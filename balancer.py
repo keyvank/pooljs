@@ -74,14 +74,24 @@ class CommanderProtocol(WebSocketServerProtocol):
 		websocket_queue = asyncio.Queue()
 		print_info()
 	
-	def result_available(self,job_id,result,error):
-		try:
-			if error:
+	def result_available(self,job_id,result,error):		
+		if error:
+			try:
 				self.sendMessage(json.dumps({"results":None,"error":True}).encode('utf-8'),False)
-			else:
-				self.sendMessage(json.dumps({"results":[result],"error":False}).encode('utf-8'),False)
+			except:
+				pass # Non of our business!
+		else:
+			self.buff.append(result)
+			if len(self.buff) >= self.buff_size:
+				self.flush()
+	
+	def flush(self):
+		try:
+			self.sendMessage(json.dumps({"results":self.buff,"error":False}).encode('utf-8'),False)
+			del self.buff[:]
 		except:
 			pass # Non of our business!
+	
 	async def onMessage(self, payload, isBinary):
 		global job_counter
 		msg = json.loads(payload.decode('utf8'))
@@ -99,6 +109,12 @@ class CommanderProtocol(WebSocketServerProtocol):
 				jobs[job_counter] = [msg["code"],self,args + msg["extraArgs"],0]
 				await job_queue.put(job_counter)
 				job_counter += 1
+		elif msg["type"] == "flush":
+			self.flush()
+		elif msg["type"] == "set":
+			if msg["property"] == "bufferSize":
+				self.buff_size = msg["value"]
+				self.flush()
 		print_info()
 	async def onClose(self, wasClean, code, reason):
 		commander_websockets.remove(self)
