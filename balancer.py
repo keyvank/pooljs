@@ -136,7 +136,7 @@ if __name__ == '__main__':
 	workerFactory.protocol = WorkerProtocol
 	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ssl_ctx)
 	print_info()
-	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler(),watcher_handler())
+	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler())
 	try:
 		server = loop.run_until_complete(all_tasks)
 	except KeyboardInterrupt:
