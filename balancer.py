@@ -111,8 +111,8 @@ async def watcher_handler():
 				if ws.last_ping_time:
 					if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
 						elapsed = int(time.time()) - ws.last_ping_time
-						#if elapsed > MAX_PONG_TIME:
-						#	ws.sendClose()
+						if elapsed > MAX_PONG_TIME:
+							ws.sendClose()
 				else:
 					ws.sendPing()
 					ws.last_ping_time = int(time.time())
@@ -127,7 +127,7 @@ if __name__ == '__main__':
 	
 	ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 	ssl_ctx.load_cert_chain(certfile='/etc/letsencrypt/live/pooljs.ir/cert.pem',keyfile='/etc/letsencrypt/live/pooljs.ir/privkey.pem')
-	ssl_ctx = None
+	#ssl_ctx = None
 	
 	commanderFactory = WebSocketServerFactory()
 	commanderFactory.protocol = CommanderProtocol
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 	workerFactory.protocol = WorkerProtocol
 	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ssl_ctx)
 	print_info()
-	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler())
+	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler(),watcher_handler())
 	try:
 		server = loop.run_until_complete(all_tasks)
 	except KeyboardInterrupt:
