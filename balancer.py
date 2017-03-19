@@ -159,18 +159,6 @@ async def watcher_handler():
 						ws.sendClose()
 				elif ws.last_pong_time:
 					ws.last_ping_time = None
-		
-		for ws in commander_websockets:
-			if ws.last_ping_time:
-				if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
-					elapsed = int(time.time()) - ws.last_ping_time
-					if elapsed > MAX_PONG_TIME:
-						ws.sendClose()
-				elif ws.last_pong_time:
-					ws.last_ping_time = None
-			else:
-				ws.sendPing()
-				ws.last_ping_time = int(time.time())
 		await asyncio.sleep(PING_INTERVAL)
 		
 if __name__ == '__main__':
