@@ -12,7 +12,7 @@ COMMANDERS_SERVER_PORT = 21212
 MAX_PONG_TIME = 3 # Seconds
 PING_INTERVAL = 5 # Seconds
 
-MAX_FAILURES = 3
+MAX_FAILURES = 10
 job_queue = asyncio.Queue()
 job_counter = 0
 jobs = {}
