@@ -145,14 +145,18 @@ async def balance_handler():
 
 async def watcher_handler():
 	while True:
+		must_close = []
 		for ws in worker_websockets:
 			if ws.last_ping_time:
 				if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
 					elapsed = int(time.time()) - ws.last_ping_time
 					if elapsed > MAX_PONG_TIME:
-						await ws.cleanup()
-						ws.sendClose()
+						must_close.append(ws)
+		for ws in must_close:
+			await ws.cleanup()
+			ws.sendClose()
 		await asyncio.sleep(PING_INTERVAL)
+		
 		
 if __name__ == '__main__':
 	import asyncio
