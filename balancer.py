@@ -68,15 +68,9 @@ class WorkerProtocol(WebSocketServerProtocol):
 class CommanderProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
 	    pass
-
-
-	def onPong(self, payload):
-		self.last_pong_time = int(time.time())
 	
 	async def onOpen(self):
 		global job_counter
-		self.last_ping_time = None
-		self.last_pong_time = None
 		self.buff = []
 		self.buff_size = 1
 		commander_websockets.add(self)
