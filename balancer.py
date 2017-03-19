@@ -147,9 +147,7 @@ async def balance_handler():
 		websocket.sendMessage(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}).encode('utf-8'),False)
 		websocket.last_ping_time = int(time.time())
 		websocket.jobs.append(job)
-		
-async def close_unavailable_sockets(socks):
-	
+
 
 async def watcher_handler():
 	while True:
