@@ -27,7 +27,7 @@ class WorkerProtocol(WebSocketServerProtocol):
 	    pass
 
 	def onPong(self, payload):
-		self.last_pong_time = int(time.time())
+		pass
 		
 	async def onOpen(self):
 		self.last_ping_time = None
@@ -39,6 +39,7 @@ class WorkerProtocol(WebSocketServerProtocol):
 		worker_exists.release()
 		print_info()
 	async def onMessage(self, payload, isBinary):
+		self.last_pong_time = int(time.time())
 		msg = json.loads(payload.decode('utf8'))
 		job_id = msg["id"]
 		jobs[job_id][1].result_available(job_id,msg["result"],False)
@@ -144,26 +145,34 @@ async def balance_handler():
 		worker_exists.release()
 		websocket = random.sample(worker_websockets, 1)[0]
 		websocket.sendMessage(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}).encode('utf-8'),False)
-		
+		websocket.last_ping_time = int(time.time())
 		websocket.jobs.append(job)
 		
 async def close_unavailable_sockets(socks):
-	for ws in socks:
-		if ws.last_ping_time:
-			if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
-				elapsed = int(time.time()) - ws.last_ping_time
-				if elapsed > MAX_PONG_TIME:
-					ws.sendClose()
-			elif ws.last_pong_time:
-				ws.last_ping_time = None
-		else:
-			ws.sendPing()
-			ws.last_ping_time = int(time.time())
+	
 
 async def watcher_handler():
 	while True:
-		await close_unavailable_sockets(worker_websockets)
-		await close_unavailable_sockets(commander_websockets)
+		for ws in worker_websockets:
+			if ws.last_ping_time:
+				if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
+					elapsed = int(time.time()) - ws.last_ping_time
+					if elapsed > MAX_PONG_TIME:
+						ws.sendClose()
+				elif ws.last_pong_time:
+					ws.last_ping_time = None
+		
+		for ws in commander_websockets:
+			if ws.last_ping_time:
+				if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
+					elapsed = int(time.time()) - ws.last_ping_time
+					if elapsed > MAX_PONG_TIME:
+						ws.sendClose()
+				elif ws.last_pong_time:
+					ws.last_ping_time = None
+			else:
+				ws.sendPing()
+				ws.last_ping_time = int(time.time())
 		await asyncio.sleep(PING_INTERVAL)
 		
 if __name__ == '__main__':
