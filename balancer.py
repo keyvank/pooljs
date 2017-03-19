@@ -48,6 +48,8 @@ class WorkerProtocol(WebSocketServerProtocol):
 		print_info()
 	
 	async def cleanup(self):
+		if self in worker_websockets:
+			worker_websockets.remove(self)
 		if hasattr(self,"jobs"):
 			for j in self.jobs:
 				jobs[j][3]+=1
@@ -60,8 +62,6 @@ class WorkerProtocol(WebSocketServerProtocol):
 		print_info()
 	
 	async def onClose(self, wasClean, code, reason):
-		if self in worker_websockets:
-			worker_websockets.remove(self)
 		await self.cleanup()
 		print_info()
 
@@ -150,9 +150,8 @@ async def watcher_handler():
 				if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
 					elapsed = int(time.time()) - ws.last_ping_time
 					if elapsed > MAX_PONG_TIME:
+						await ws.cleanup()
 						ws.sendClose()
-				elif ws.last_pong_time:
-					ws.last_ping_time = None
 		await asyncio.sleep(PING_INTERVAL)
 		
 if __name__ == '__main__':
