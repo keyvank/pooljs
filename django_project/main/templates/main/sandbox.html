@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+	<head>
+		<title>Raisin Sandbox</title>
+		<meta charset="utf-8"/>
+		<script src="{% static 'js/commander.js' %}"></script>
+
+	</head>
+	<body>
+		<button onclick="go();">Run</button>
+		<button onclick="info();">Info</button>
+		<canvas width=100 height=100 id="canvas"></canvas>
+	</body>
+	<script>
+			function go(){
+				commander.setBufferSize(1);
+				commander.for(0,100,function(i){
+					return i*i;
+				}).result(function(i){
+					document.writeln(i);
+				});
+			}
+			
+			function info(){
+				commander.oninfo = function(workersCount){
+					alert("Workers: " + workersCount);
+				}
+				commander.info();
+			}
+	</script>
+</html>

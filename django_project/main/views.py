@@ -6,8 +6,8 @@ def index(request):
 def worker(request):
 	return render(request,'main/worker.html',{})
 
-def commander(request):
-	return render(request,'main/commander.html',{})
+def sandbox(request):
+	return render(request,'main/sandbox.html',{})
 
 def raytracer(request):
 	return render(request,'main/raytracer.html',{})
