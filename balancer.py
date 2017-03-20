@@ -50,6 +50,7 @@ class WorkerProtocol(WebSocketServerProtocol):
 	async def cleanup(self):
 		if self in worker_websockets:
 			worker_websockets.remove(self)
+		print("SHIT")
 		if hasattr(self,"jobs"):
 			for j in self.jobs:
 				jobs[j][3]+=1
@@ -80,11 +81,11 @@ class CommanderProtocol(WebSocketServerProtocol):
 	def result_available(self,job_id,result,error):		
 		if error:
 			try:
-				self.sendMessage(json.dumps({"type":"result","results":None,"error":True}).encode('utf-8'),False)
+				self.sendMessage(json.dumps({"type":"result","results":[[None,jobs[job_id][4]]],"error":True}).encode('utf-8'),False)
 			except:
 				pass # Non of our business!
 		else:
-			self.buff.append(result)
+			self.buff.append([result,jobs[job_id][4]])
 			if len(self.buff) >= self.buff_size:
 				self.flush()
 	
@@ -105,17 +106,17 @@ class CommanderProtocol(WebSocketServerProtocol):
 		global job_counter
 		msg = json.loads(payload.decode('utf8'))
 		if msg["type"] == "run":
-			jobs[job_counter] = [msg["code"],self,msg["args"],0]
+			jobs[job_counter] = [msg["code"],self,msg["args"],0,msg["id"]]
 			await job_queue.put(job_counter)
 			job_counter += 1
 		elif msg["type"] == "for":
 			for i in range(msg["start"],msg["end"]):
-				jobs[job_counter] = [msg["code"],self,[i] + msg["extraArgs"],0]
+				jobs[job_counter] = [msg["code"],self,[i] + msg["extraArgs"],0,msg["id"]]
 				await job_queue.put(job_counter)
 				job_counter += 1
 		elif msg["type"] == "forEach":
 			for args in msg["argsList"]:
-				jobs[job_counter] = [msg["code"],self,args + msg["extraArgs"],0]
+				jobs[job_counter] = [msg["code"],self,args + msg["extraArgs"],0,msg["id"]]
 				await job_queue.put(job_counter)
 				job_counter += 1
 		elif msg["type"] == "flush":

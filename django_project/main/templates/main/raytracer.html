@@ -32,12 +32,6 @@
 				}
 				ctx.putImageData(imgdata,x,y);
 			}
-			commander.onresult = function(result,error){
-				if(!error)
-					drawRegion(result[0],result[1],result[2]);
-				else
-					alert("There was an error with a job!");
-			}
 
 			var partsWidth = 40, partsHeight = 40;
 			var width = 640, height = 480;
@@ -175,7 +169,13 @@
 						data.push(row);
 					}
 					return [widthSize*x,heightSize*y,data];
-				},[width,height,partsWidth,partsHeight]);
+				},[width,height,partsWidth,partsHeight]).result(function(result,error){
+					if(!error)
+						drawRegion(result[0],result[1],result[2]);
+					else
+						alert("There was an error with a job!");
+				});
+					
 			}
 			function info(){
 				commander.oninfo = function(workersCount){

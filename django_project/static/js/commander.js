@@ -4,18 +4,31 @@
 		var WEBSOCKET_HOST = "pooljs.ir";
 		var WEBSOCKET_PORT = 21212;
 		var WEBSOCKET_ADDRESS = "wss://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
-
+		var jobCounter = 0;
 		var sock = new WebSocket(WEBSOCKET_ADDRESS);
+		var listeners = [];
 
 		context.commander = {
 			run: function(func,args = []){
-				sock.send(JSON.stringify({type:"run", args:args, code:func.toString()}));
+				var id = jobCounter++;
+				sock.send(JSON.stringify({type:"run", args:args, code:func.toString(), id:id}));
+				return {result: function(func){
+					listeners[id] = func;
+				}};
 			},
 			for: function(start,end,func, extraArgs = []){
-				sock.send(JSON.stringify({type:"for", start:start, end:end, code:func.toString(),extraArgs:extraArgs}));
+				var id = jobCounter++;
+				sock.send(JSON.stringify({type:"for", start:start, end:end, code:func.toString(),extraArgs:extraArgs, id:id}));
+				return {result: function(func){
+					listeners[id] = func;
+				}};
 			},
 			forEach: function(argsList,func,extraArgs = []){
-				sock.send(JSON.stringify({type:"forEach", argsList:argsList, code:func.toString(), extraArgs:extraArgs}));
+				var id = jobCounter++;
+				sock.send(JSON.stringify({type:"forEach", argsList:argsList, code:func.toString(), extraArgs:extraArgs, id:id}));
+				return {result: function(func){
+					listeners[id] = func;
+				}};
 			},
 			setBufferSize: function(size){
 				sock.send(JSON.stringify({type:"set", property:"bufferSize", value:size}));
@@ -33,12 +46,12 @@
 		sock.onmessage = function(event){
 			var msg = JSON.parse(event.data);
 			if(msg.type == "result"){
-				if("onresult" in context.commander){
-					if(msg.error)
-						context.commander.onresult(null,true);
-					else
-						for(var i=0;i<msg.results.length;i++)
-							context.commander.onresult(msg.results[i]);
+				if(msg.error && msg.results[0][1] in listeners)
+					listeners[msg.results[0][1]](msg.results[0][0],true);
+				else{
+					for(var i=0;i<msg.results.length;i++)
+						if(msg.results[i][1] in listeners)
+							listeners[msg.results[i][1]](msg.results[i][0],false);
 				}
 			}
 			else if(msg.type == "info"){
