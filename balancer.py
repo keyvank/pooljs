@@ -138,10 +138,12 @@ async def balance_handler():
 		await worker_exists.wait_for(lambda:len(worker_websockets) > 0)
 		worker_exists.release()
 		websocket = random.sample(worker_websockets, 1)[0]
-		websocket.sendMessage(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}).encode('utf-8'),False)
-		websocket.last_ping_time = int(time.time())
-		websocket.jobs.append(job)
-
+		try:
+			websocket.sendMessage(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}).encode('utf-8'),False)
+			websocket.last_ping_time = int(time.time())
+			websocket.jobs.append(job)
+		except:
+			job_queue.put(job) # Revive the job
 
 async def watcher_handler():
 	while True:
@@ -154,7 +156,10 @@ async def watcher_handler():
 						must_close.append(ws)
 		for ws in must_close:
 			await ws.cleanup()
-			ws.sendClose()
+			try:
+				ws.sendClose()
+			except:
+				pass # Just to be sure
 		await asyncio.sleep(PING_INTERVAL)
 		
 		
