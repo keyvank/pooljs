@@ -50,7 +50,6 @@ class WorkerProtocol(WebSocketServerProtocol):
 	async def cleanup(self):
 		if self in worker_websockets:
 			worker_websockets.remove(self)
-		print("SHIT")
 		if hasattr(self,"jobs"):
 			for j in self.jobs:
 				jobs[j][3]+=1
