@@ -46,6 +46,7 @@
 					function mul(a,b){return [a[0]*b,a[1]*b,a[2]*b];}
 					function ewmul(a,b){return [a[0]*b[0],a[1]*b[1],a[2]*b[2]];}
 					function normalize(a){var len = Math.sqrt(dot(a,a));return [a[0]/len,a[1]/len,a[2]/len];}
+					function integer(a){return [Math.floor(a[0]),Math.floor(a[1]),Math.floor(a[2])];}
 					function lookAt(pos,targ,up=[0,1,0],fov=Math.PI/4,aspRatio=width/height){
 						var dir = normalize(sub(targ,pos));
 						targ = sum(pos,dir);
@@ -153,7 +154,7 @@
 						var dir = normalize(sub(targ,cam[0]));
 						var col=traceRay([cam[0],dir]);
 						if(col)
-							return mul(col,255);
+							return integer(mul(col,255));
 						else
 							return [0,0,0];
 					}
