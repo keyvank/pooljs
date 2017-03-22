@@ -42,10 +42,14 @@ class WorkerProtocol(WebSocketServerProtocol):
 		self.last_pong_time = int(time.time())
 		msg = json.loads(payload.decode('utf8'))
 		job_id = msg["id"]
-		jobs[job_id][1].result_available(job_id,msg["result"],False)
-		jobs[job_id][1].jobs.remove(job_id)
-		del jobs[job_id]
-		self.jobs.remove(job_id)
+		try:
+			jobs[job_id][1].result_available(job_id,msg["result"],False)
+			jobs[job_id][1].jobs.remove(job_id)
+			del jobs[job_id]
+		except KeyError:
+			pass
+		if job_id in self.jobs:
+			self.jobs.remove(job_id)
 		print_info()
 	
 	async def cleanup(self):
@@ -53,12 +57,15 @@ class WorkerProtocol(WebSocketServerProtocol):
 			worker_websockets.remove(self)
 		if hasattr(self,"jobs"):
 			for j in self.jobs:
-				jobs[j][3]+=1
-				if jobs[j][3] > MAX_FAILURES:
-					jobs[j][1].result_available(j,None,True)
-					del jobs[j]
-				else:
-					await job_queue.put(j)
+				try:
+					jobs[j][3]+=1
+					if jobs[j][3] > MAX_FAILURES:
+						jobs[j][1].result_available(j,None,True)
+						del jobs[j]
+					else:
+						await job_queue.put(j)
+				except KeyError:
+					pass
 			del self.jobs[:]
 		print_info()
 	
@@ -138,7 +145,10 @@ class CommanderProtocol(WebSocketServerProtocol):
 			commander_websockets.remove(self)
 		if hasattr(self,"jobs"):
 			for j in self.jobs:
-				del jobs[j]
+				try:
+					del jobs[j]
+				except KeyError:
+					pass
 			del self.jobs[:]
 		print_info()
 async def balance_handler():
