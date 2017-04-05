@@ -4,7 +4,7 @@
 
 <html>
 	<head>
-		<title>Raisin RayTracing</title>
+		<title>Pool.js - Browser Computing Unleashed</title>
 		<meta charset="utf-8"/>
 		<script src="{% static 'js/worker.js' %}"></script>
 		<script src="{% static 'js/pool.js' %}"></script>
@@ -53,12 +53,25 @@
 	<body>
 		<h1>Pool.js</h1>
 		<p>Workers available: <span id="num-workers">0</span></p>
-		<canvas id="frame" width="160" height="120" style="border:1px solid #000000;">
-		</canvas>
-		<button id="rayTracer-btn">Run Ray Tracer!</button>
-		<h2>Make the world a better place to live! Put this script on your website!</h2>
+		
+		<h2>How <i>Distibuted Browser Computing</i> can change the world?</h2>
+		<p>There are tons of algorithms which can be distributed between many computers and run enormously faster!</p>
+		<p>Using the power of web and browsers, we can bring supercomputing to the public!</p>
+		<p>Pool.js can help us:</p>
+		<ul>
+			<li>Do 3D rendering</li>
+			<li>Crack passwords</li>
+			<li>Recognite faces and fingerprints</li>
+			<li>Store data</li>
+			<li>Predict weather</li>
+			<li>Find DNA sequences</li>
+			<li>Simulate the world and our mind</li>
+			<li>Look for the answer to life the universe and everything!</li>
+			<li>And much more ...!</li>
+		</ul>
+		<h2>So let's make the world a better place to live! Put this script in your website!</h2>
 		<pre>&lt;script src="https://pooljs.ir/static/js/worker.js"&gt;&lt;/script&gt;</pre>
-		<h2>Pool.js works like this:</h2>
+		<h2>Implement your distibuted algorithms</h2>
 		<textarea>pool.for(0,10,function(i){
 	return i*i;
 }).result(function(result){
@@ -67,6 +80,12 @@
 		<button>Distribute my code!</button>
 		<div>Result:</div>
 		<div style="background:black;color:white;">0 1 4 9 16 25 36 49 64 81</div>
+		<h2>Some interesting works running on this platform</h2>
+		<h3>Photorealistic 3D rendering!</h3>
+		<canvas id="frame" width="160" height="120" style="border:1px solid #000000;">
+		</canvas>
+		<button id="rayTracer-btn-single">Run on a single browserl!</button>
+		<button id="rayTracer-btn">Run on 8 browser!</button>
 		<div>Copyright (c) 2017 - Keyvan M. Kambakhsh</div>
 	</body>
 </html>
