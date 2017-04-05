@@ -8,7 +8,7 @@
 		var sock = new WebSocket(WEBSOCKET_ADDRESS);
 		var listeners = [];
 
-		context.commander = {
+		context.pool = {
 			run: function(func,args = []){
 				var id = jobCounter++;
 				sock.send(JSON.stringify({type:"run", args:args, code:func.toString(), id:id}));
@@ -55,8 +55,8 @@
 				}
 			}
 			else if(msg.type == "info"){
-				if("oninfo" in context.commander){
-					context.commander.oninfo(msg.workersCount);
+				if("oninfo" in context.pool){
+					context.pool.oninfo(msg.workersCount);
 				}
 			}
 		};

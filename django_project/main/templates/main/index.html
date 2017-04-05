@@ -1,1 +1,68 @@
-Hello Raisin!
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+	<head>
+		<title>Raisin RayTracing</title>
+		<meta charset="utf-8"/>
+		<script src="{% static 'js/worker.js' %}"></script>
+		<script src="{% static 'js/pool.js' %}"></script>
+		<script src="{% static 'js/raytracer.js' %}"></script>
+		<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<script>
+			$(document).ready(function(){
+				var ctx = document.getElementById("frame").getContext("2d");
+				function drawRegion(x,y,data){
+					var h=data.length;
+					var w=data[0].length;
+					var imgdata = ctx.getImageData(x,y, w, h);
+					for(var i=0;i<h;i++){
+						for(var j=0;j<w;j++){
+							var ind = i*w +j;
+							imgdata.data[ind*4]=data[i][j][0];
+							imgdata.data[ind*4+1]=data[i][j][1];
+							imgdata.data[ind*4+2]=data[i][j][2];
+							imgdata.data[ind*4+3]=255;
+						}
+					}
+					ctx.putImageData(imgdata,x,y);
+				}
+
+				var partsWidth = 40, partsHeight = 40;
+				var width = 640, height = 480;
+				$("#rayTracer-btn").click(function(){
+					pool.setBufferSize(100);
+					pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion);
+					
+				});
+				var numWorkers = 0;
+				function info(){
+					pool.oninfo = function(workersCount){
+						numWorkers = workersCount;
+						$("#num-workers").text(numWorkers);
+					}
+					pool.info();
+					setTimeout(info,2000);
+				}
+				info();
+				
+			});
+		</script>
+	</head>
+	<body>
+		<h1>Pool.js</h1>
+		<p>Workers available: <span id="num-workers">0</span></p>
+		<canvas id="frame" width="640" height="480" style="border:1px solid #000000;">
+		</canvas>
+		<button id="rayTracer-btn">Run Ray Tracer!</button>
+		<h2>Make the world a better place to live! Put this script on your website!</h2>
+		<pre>&lt;script src="https://pooljs.ir/static/js/worker.js"&gt;&lt;/script&gt;</pre>
+		<h2>Pool.js works like this:</h2>
+		<pre>pool.for(0,10,function(i){
+	return i*i;
+}).result(function(result){
+	alert(result);
+});</pre>
+	</body>
+</html>
