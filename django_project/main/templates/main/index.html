@@ -32,7 +32,7 @@
 				var partsWidth = 8, partsHeight = 8;
 				var width = 160, height = 120;
 				$("#rayTracer-btn").click(function(){
-					pool.setBufferSize(100);
+					pool.setBufferSize(1);
 					pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion);
 					
 				});
