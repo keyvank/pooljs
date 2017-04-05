@@ -45,7 +45,7 @@
 					pool.info();
 					setTimeout(info,2000);
 				}
-				info();
+				pool.onopen = function(){info();}
 				
 			});
 		</script>

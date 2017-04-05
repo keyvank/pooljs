@@ -42,6 +42,9 @@
 		}
 
 		sock.onopen = function(){
+			if("onopen" in context.pool){
+				context.pool.onopen();
+			}
 		};
 		sock.onmessage = function(event){
 			var msg = JSON.parse(event.data);
