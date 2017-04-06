@@ -47,6 +47,12 @@
 				}
 				pool.onopen = function(){info();}
 				
+				$("#custom-code-btn").click(function(){
+					$('#custom-code-result').empty();
+					var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+$("#custom-code").val();
+					eval(code);
+				});
+				
 			});
 		</script>
 	</head>
@@ -73,14 +79,14 @@
 		<h2>So let's make the world a better place to live! Put this script in your website!</h2>
 		<pre>&lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt;</pre>
 		<h2>Implement your distributed algorithms</h2>
-		<textarea style="width:250px;height:120px;">pool.for(0,10,function(i){
+		<textarea id="custom-code" style="width:350px;height:120px;">pool.for(0,10,function(i){
 	return i*i;
 }).result(function(result){
-	alert(result);
+	console.log(result);
 });</textarea>
-		<button>Distribute my code!</button>
+		<button id="custom-code-btn">Distribute my code!</button>
 		<div>Result:</div>
-		<div style="background:black;color:white;">0 1 4 9 16 25 36 49 64 81</div>
+		<div id="custom-code-result" style="background:black;color:white;height:60px;width:400px;font-size:20px;"></div>
 		<h2>Some interesting works running on this platform</h2>
 		<h3>Photorealistic 3D rendering!</h3>
 		<canvas id="frame" width="160" height="120" style="border:1px solid #000000;">
