@@ -15,6 +15,7 @@
 		var MAX_JOB_TIME = 4000;
 
 		var workerPool = [];
+		var jobs = [];
 		function fillPool(){
 			while(workerPool.length < navigator.hardwareConcurrency){
 				var worker = createWorker(function(){
@@ -27,42 +28,58 @@
 						self.postMessage(job_result);
 					}, false);
 				});
+				worker.jobCreatedTime = null;
+				worker.job = null;
 				workerPool.push(worker);
 			}
 		}
 		fillPool();
 		context.worker = {}
 		
-		
+		var sock = null;
+		function notify(){
+				var new_job = jobs.shift();
+				if(new_job)
+					balance(new_job,false);
+			}
+		function response(event,worker){
+			var job_result = event.data;
+			worker.jobCreatedTime = null;
+			worker.job = null;
+			sock.send(JSON.stringify(job_result));
+			notify();
+		}
+
+		function balance(job,isnew){
+			if(isnew && jobs.length > 0){
+				jobs.push(job);
+				job = jobs.shift();
+			}
+			var done = false;
+			for(var i=0;i<workerPool.length;i++){
+				var w=workerPool[i];
+				if(!w.job){
+					w.jobCreatedTime = now();
+					w.job = job;
+					w.onmessage = function(event){response(event,w);};
+					w.postMessage(job);
+					done = true;
+					break;
+				}
+			}
+			if(!done){
+				jobs.push(job);
+			}
+		}
 		
 		function startSocket(){
-			var sock = new WebSocket(WEBSOCKET_ADDRESS);
-
-			function response(event,worker){
-				var job_result = event.data;
-				worker.numJobs--;
-				if(worker.numJobs == 0)
-					worker.requestTime = null;
-				sock.send(JSON.stringify(job_result));
-			}
-
-			function balance(job){
-				var w = workerPool[Math.floor(Math.random()*workerPool.length)];
-				if(!w.requestTime)
-					w.requestTime = now();
-				if(!w.numJobs)
-					w.numJobs=1;
-				else
-					w.numJobs++;
-				w.onmessage = function(event){response(event,w);};
-				w.postMessage(job);
-			}
+			sock = new WebSocket(WEBSOCKET_ADDRESS);
 
 			sock.onopen = function(){
 			};
 			sock.onmessage = function(event){
 				var job = JSON.parse(event.data);
-				balance(job);
+				balance(job,true);
 			};
 			sock.onclose = function(){
 				setTimeout(startSocket,5000);
@@ -73,10 +90,17 @@
 		
 		function badJobKiller(){
 			for(var i=0;i<workerPool.length;i++){
-				if(workerPool[i].requestTime){
-					if(now() - workerPool[i].requestTime > MAX_JOB_TIME){
-						workerPool[i].terminate();
+				if(workerPool[i].jobCreatedTime){
+					if(now() - workerPool[i].jobCreatedTime > MAX_JOB_TIME){
+						var w=workerPool[i];
+						w.terminate();
 						workerPool.splice(i,1);
+						if(sock){
+							var job_result={"id":w.job.id,"result":null}; 
+							sock.send(JSON.stringify(job_result));
+						}
+						if(notify)
+							notify();
 					}
 				}
 			}
