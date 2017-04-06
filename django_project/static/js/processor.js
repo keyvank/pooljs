@@ -99,8 +99,7 @@
 							var job_result={"id":w.job.id,"result":null}; 
 							sock.send(JSON.stringify(job_result));
 						}
-						if(notify)
-							notify();
+						notify();
 					}
 				}
 			}
