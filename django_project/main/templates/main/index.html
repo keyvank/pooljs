@@ -1,98 +1,93 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 
 {% load staticfiles %}
 
-<html>
-	<head>
-		<title>Pool.js - Browser Computing Unleashed</title>
-		<meta charset="utf-8"/>
-		<script src="{% static 'js/processor.js' %}"></script>
-		<script src="{% static 'js/pool.js' %}"></script>
-		<script src="{% static 'js/raytracer.js' %}"></script>
-		<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-		<script>
-			$(document).ready(function(){
-				var ctx = document.getElementById("frame").getContext("2d");
-				function drawRegion(x,y,data){
-					var h=data.length;
-					var w=data[0].length;
-					var imgdata = ctx.getImageData(x,y, w, h);
-					for(var i=0;i<h;i++){
-						for(var j=0;j<w;j++){
-							var ind = i*w +j;
-							imgdata.data[ind*4]=data[i][j][0];
-							imgdata.data[ind*4+1]=data[i][j][1];
-							imgdata.data[ind*4+2]=data[i][j][2];
-							imgdata.data[ind*4+3]=255;
-						}
+{% block head %}
+	{{ block.super }}
+	<script src="{% static 'js/raytracer.js' %}"></script>
+	<script>
+		$(document).ready(function(){
+			var ctx = document.getElementById("frame").getContext("2d");
+			function drawRegion(x,y,data){
+				var h=data.length;
+				var w=data[0].length;
+				var imgdata = ctx.getImageData(x,y, w, h);
+				for(var i=0;i<h;i++){
+					for(var j=0;j<w;j++){
+						var ind = i*w +j;
+						imgdata.data[ind*4]=data[i][j][0];
+						imgdata.data[ind*4+1]=data[i][j][1];
+						imgdata.data[ind*4+2]=data[i][j][2];
+						imgdata.data[ind*4+3]=255;
 					}
-					ctx.putImageData(imgdata,x,y);
 				}
+				ctx.putImageData(imgdata,x,y);
+			}
 
-				var partsWidth = 8, partsHeight = 8;
-				var width = 160, height = 120;
-				$("#rayTracer-btn").click(function(){
-					pool.setBufferSize(1);
-					pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion);
-					
-				});
-				var numWorkers = 0;
-				function info(){
-					pool.oninfo = function(workersCount){
-						numWorkers = workersCount;
-						$("#num-workers").text(numWorkers);
-					}
-					pool.info();
-					setTimeout(info,5000);
-				}
-				pool.onopen = function(){info();}
-				
-				$("#custom-code-btn").click(function(){
-					$('#custom-code-result').empty();
-					var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+$("#custom-code").val();
-					eval(code);
-				});
+			var partsWidth = 8, partsHeight = 8;
+			var width = 160, height = 120;
+			$("#rayTracer-btn").click(function(){
+				pool.setBufferSize(1);
+				pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion);
 				
 			});
-		</script>
-	</head>
-	<body>
-		<h1>Pool.js</h1>
-		<p>Distribute your JavaScript code to thousands of processors!</p>
-		<p>Processors available: <span id="num-workers">0</span></p>
-		
-		<h2>How <i>Distibuted Browser Computing</i> can change the world?</h2>
-		<p>There are tons of algorithms which can be distributed between many computers and run enormously faster!</p>
-		<p>Using the power of web and browsers, we can bring supercomputing to the public!</p>
-		<p>Pool.js can help us:</p>
-		<ul>
-			<li>Do 3D rendering</li>
-			<li>Crack passwords</li>
-			<li>Recognite faces and fingerprints</li>
-			<li>Store data</li>
-			<li>Predict weather</li>
-			<li>Find DNA sequences</li>
-			<li>Simulate the world and our mind</li>
-			<li>Look for the answer to life the universe and everything!</li>
-			<li>And much more ...!</li>
-		</ul>
-		<h2>So let's make the world a better place to live! Put this script in your website!</h2>
-		<pre>&lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt;</pre>
-		<h2>Implement your distributed algorithms</h2>
-		<textarea id="custom-code" style="width:350px;height:120px;">pool.for(0,10,function(i){
-	return i*i;
+			var numWorkers = 0;
+			function info(){
+				pool.oninfo = function(workersCount){
+					numWorkers = workersCount;
+					$("#num-workers").text(numWorkers);
+				}
+				pool.info();
+				setTimeout(info,5000);
+			}
+			pool.onopen = function(){info();}
+			
+			$("#custom-code-btn").click(function(){
+				$('#custom-code-result').empty();
+				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+$("#custom-code").val();
+				eval(code);
+			});
+			
+		});
+	</script>
+{% endblock %}
+
+
+{% block body %}
+	{{ block.super }}
+	<p>Distribute your JavaScript code to thousands of processors!</p>
+	<p>Processors available: <span id="num-workers">0</span></p>
+	
+	<h2>How <i>Distibuted Browser Computing</i> can change the world?</h2>
+	<p>There are tons of algorithms which can be distributed between many computers and run enormously faster!</p>
+	<p>Using the power of web and browsers, we can bring supercomputing to the public!</p>
+	<p>Pool.js can help us:</p>
+	<ul>
+		<li>Do 3D rendering</li>
+		<li>Crack passwords</li>
+		<li>Recognite faces and fingerprints</li>
+		<li>Store data</li>
+		<li>Predict weather</li>
+		<li>Find DNA sequences</li>
+		<li>Simulate the world and our mind</li>
+		<li>Look for the answer to life the universe and everything!</li>
+		<li>And much more ...!</li>
+	</ul>
+	<h2>So let's make the world a better place to live! Put this script in your website!</h2>
+	<pre>&lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt;</pre>
+	<h2>Implement your distributed algorithms</h2>
+	<textarea id="custom-code" style="width:350px;height:120px;">pool.for(0,10,function(i){
+return i*i;
 }).result(function(result){
-	console.log(result);
+console.log(result);
 });</textarea>
-		<button id="custom-code-btn">Distribute my code!</button>
-		<div>Result:</div>
-		<div id="custom-code-result" style="background:black;color:white;height:60px;width:400px;font-size:20px;"></div>
-		<h2>Some interesting works running on this platform</h2>
-		<h3>Photorealistic 3D rendering!</h3>
-		<canvas id="frame" width="160" height="120" style="border:1px solid #000000;">
-		</canvas>
-		<button id="rayTracer-btn-single">Run on a single browser!</button>
-		<button id="rayTracer-btn">Run on 64 browsers!</button>
-		<div>Copyright (c) 2017 - Keyvan M. Kambakhsh</div>
-	</body>
-</html>
+	<button id="custom-code-btn">Distribute my code!</button>
+	<div>Result:</div>
+	<div id="custom-code-result" style="background:black;color:white;height:60px;width:400px;font-size:20px;"></div>
+	<h2>Some interesting works running on this platform</h2>
+	<h3>Photorealistic 3D rendering!</h3>
+	<canvas id="frame" width="160" height="120" style="border:1px solid #000000;">
+	</canvas>
+	<button id="rayTracer-btn-single">Run on a single browser!</button>
+	<button id="rayTracer-btn">Run on 64 browsers!</button>
+{% endblock %}

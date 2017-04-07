@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+	<head>
+		<title>Pool.js - Browser Computing Unleashed</title>
+		<meta charset="utf-8"/>
+		<script src="{% static 'js/processor.js' %}"></script>
+		<script src="{% static 'js/pool.js' %}"></script>
+		<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+		{% block head %} {% endblock %}
+	</head>
+	<body>
+		<h1>Pool.js</h1>
+		<a href="{% url 'main_index' %}">Index</a> - <a href="{% url 'main_docs' %}">Docs</a> - <a href="{% url 'main_sandbox' %}">Sandbox</a>
+		{% block body %} {% endblock %}
+		<div>Copyright (c) 2017 - Keyvan M. Kambakhsh</div>
+	</body>
+</html>
