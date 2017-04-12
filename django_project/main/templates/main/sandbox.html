@@ -2,6 +2,39 @@
 
 {% load staticfiles %}
 
+{% block head %}
+	<script>
+		$(document).ready(function(){
+			var numWorkers = 0;
+			function info(){
+				pool.oninfo = function(workersCount){
+					numWorkers = workersCount;
+					$("#num-workers").text(numWorkers);
+				}
+				pool.info();
+				setTimeout(info,5000);
+			}
+			pool.onopen = function(){info();}
+			
+			$("#custom-code-btn").click(function(){
+				$('#custom-code-result').empty();
+				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+$("#custom-code").val();
+				eval(code);
+			});
+		});
+	</script>
+{% endblock %}
+
+
 {% block body %}
 	<h2>Sandbox!</h2>
+	<p>Processors available: <span id="num-workers">0</span></p>
+	<textarea id="custom-code" style="width:350px;height:120px;">pool.for(0,10,function(i){
+return i*i;
+}).result(function(result){
+console.log(result);
+});</textarea>
+	<div>Result:</div>
+	<div id="custom-code-result" style="background:black;color:white;height:60px;width:400px;font-size:20px;"></div>
+	<button id="custom-code-btn">Distribute my code!</button>
 {% endblock %}

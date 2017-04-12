@@ -4,4 +4,67 @@
 
 {% block body %}
 	<h2>Docs!</h2>
+	<p>
+		Pool.js is a JavaScript platform for Distibuted Browser Computing. The platform 
+		consists of the Pool.js Server which handles the connections and distributes the
+		tasks between the browsers, Processors which are the browsers connected to the Pool.js Server (And they may have multiple cores)
+		in order to run distributed scripts and the Clients which run their scripts on the Processors.
+	</p>
+	<p>
+		For a browser to be a Processor, it should run the script located at: https://pooljs.ir/static/js/processor.js
+		This script establishes a WebSocket connection to the Pool.js Server and fetches the Jobs and distributes them between the hosting machine's CPU cores.
+	</p>
+	<p>
+		One can add &lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt; to his website so that every visitor of that
+		website become a Pool.js Processor.
+	</p>
+	<p>
+		In order for the clients to run their scripts on the Pool.js Processors, they should run the script located at https://pooljs.ir/static/js/pool.js
+		Consider the problem finding prime numbers between 1 to 1000, distributing the task between 10 browsers is possible in three ways:
+	</p>
+
+	<pre>
+for(var i = 0;i &lt 10; i++)
+	pool.run(function(from,to){
+		// Finding primes
+	},[i*100,(i+1)*100]).result(primes){
+		console.log(primes);
+	};
+}
+	</pre>
+	<p>
+		pool.run() accepts a single job and posts it to the pool of Processors
+	</p>
+
+	<pre>
+pool.for(0,10,function(i){
+	var from = i*100;
+	var to = (i+1)*100;
+	// Finding primes
+}).result(primes){
+	console.log(primes);
+}
+	</pre>
+	<p>
+		pool.for() is a parallel for function which creates multiple jobs according to the paramters and passes the index to the function automatically
+	</p>
+	<pre>
+pool.forEach([[0,100],[101,200],[201,300],[301,400],[401,500],[501,600],[601,700],[701,800],[801,900],[901,100]],function(obj){
+	var from = obj[0];
+	var to = obj[1];
+}).result(primes){
+	console.log(primes);
+}
+	</pre>
+	<p>
+		pool.forEach() is a parallel forEach function which creates multiple jobs and passes each object from the list provided to the function automatically
+	</p>
+	<p>
+		Notice that you can't use variables outside the scope of parallel function and you should pass them to the function as extra arguments like this:
+	</p>
+	<pre>
+var myVar1 = 2;
+var myVar2 = [1,2,3];
+pool.for(0,10,function(i,myVar1,myVar2){ // Blah blah blah }, [myVar1,myVar2]).result(function(){ // Blah blah blah });
+	</pre>
 {% endblock %}
