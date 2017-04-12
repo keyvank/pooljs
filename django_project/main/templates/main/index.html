@@ -33,16 +33,6 @@
 				pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion);
 				
 			});
-			var numWorkers = 0;
-			function info(){
-				pool.oninfo = function(workersCount){
-					numWorkers = workersCount;
-					$("#num-workers").text(numWorkers);
-				}
-				pool.info();
-				setTimeout(info,5000);
-			}
-			pool.onopen = function(){info();}
 			
 			$("#custom-code-btn").click(function(){
 				$('#custom-code-result').empty();
@@ -57,8 +47,6 @@
 
 {% block body %}
 	{{ block.super }}
-	<p>Distribute your JavaScript code to thousands of processors!</p>
-	<p>Processors available: <span id="num-workers">0</span></p>
 	
 	<h2>How <i>Distibuted Browser Computing</i> can change the world?</h2>
 	<p>There are tons of algorithms which can be distributed between many computers and run enormously faster!</p>
