@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block head %}
+	<script>
+		$(document).ready(function(){
+			
+			$(".custom-code-btn").click(function(){
+				$('.custom-code-result').empty();
+				var code = "var console = {log: function(str){$('.custom-code-result').append(str+'<br>');}}\n"+$(".custom-code").val();
+				eval(code);
+			});
+		});
+	</script>
+{% endblock %}
+
+
+{% block body %}
+	<h2>Featured Projects!</h2>
+	<div id="neural-net">
+		<h3>Neural Networks with Pool.js</h3>
+		<textarea class="custom-code" style="width:350px;height:120px;">pool.for(0,1,function(i){
+	function sigmoid(m){
+		var ret = [];
+		for (var i = 0; i &lt; m.length; i++) {
+			var row = [];
+			for (var j = 0; j &lt; m[0].length; j++) {
+				row.push(1/(1+Math.exp(-m[i][j])));
+			}
+			ret.push(row);
+		}
+		return ret;
+	}
+	function sum(m1,m2){
+		var ret = [];
+		for (var i = 0; i &lt; m1.length; i++) {
+			var row = [];
+			for (var j = 0; j &lt; m1[0].length; j++) {
+				row.push(m1[i][j]+m2[i][j]);
+			}
+			ret.push(row);
+		}
+		return ret;
+	}
+	function rand(m,n){
+		var matrix = [];
+		for(var j = 0; j &lt; m;j++){
+			var row = [];
+			for(var i = 0; i &lt; n;i++){
+				row.push(Math.random());
+			}
+			matrix.push(row);
+		}
+		return matrix;
+	}
+	function mult(m1,m2){
+		var result = [];
+		for (var i = 0; i &lt; m1.length; i++) {
+			result[i] = [];
+			for (var j = 0; j &lt; m2[0].length; j++) {
+				var sum = 0;
+				for (var k = 0; k &lt; m1[0].length; k++) {
+					sum += m1[i][k] * m2[k][j];
+				}
+				result[i][j] = sum;
+			}
+		}
+		return result;
+	}
+	function Network(shape){
+		this.biases = [];
+		this.weights = [];
+		for(var i = 0; i &lt; shape.length-1;i++){
+			this.biases.push(rand(1,shape[i+1]));
+			this.weights.push(rand(shape[i],shape[i+1]));
+		}
+	}
+	Network.prototype.compute = function(inputs){
+		var result=inputs;
+		for(var i = 0; i &lt; this.weights.length;i++){
+			result = sigmoid(sum(mult(result,this.weights[i]),this.biases[i]));
+		}
+		return result;
+	}
+	var net = new Network([2,5,4,2,3]);
+	return net.compute([[1,2]]);
+}).result(function(result){
+	console.log(result);
+});
+</textarea>
+		<div>Result:</div>
+		<div class="custom-code-result" style="background:black;color:white;height:60px;width:400px;font-size:20px;"></div>
+		<button class="custom-code-btn">Distribute my code!</button>
+	</div>
+{% endblock %}

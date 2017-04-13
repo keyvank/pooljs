@@ -8,3 +8,6 @@ def sandbox(request):
 
 def docs(request):
 	return render(request,'main/docs.html',{})
+
+def featured(request):
+	return render(request,'main/featured.html',{})
