@@ -74,4 +74,10 @@ var myVar1 = 2;
 var myVar2 = [1,2,3];
 pool.for(0,10,function(i,myVar1,myVar2){ // Blah blah blah }, [myVar1,myVar2]).result(function(){ // Blah blah blah });
 	</pre>
+	<p>
+		pool.setBufferSize(size); lets you set a buffer for the results of your Jobs in order to reduce the number of WebSocket messages. Pool.js Server will automatically flush the buffer when it is full. If the buffer is not yet full and you need the results you should call the pool.flush() function to manually flush the buffer.
+	</p>
+	<p>
+		pool.flush(); manually flush the result buffer in Pool.js Server.
+	</p>
 {% endblock %}
