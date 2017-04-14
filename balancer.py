@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
+
 from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
 import asyncio
 import json
 import random
 import time
-WORKERS_SERVER_IP = '0.0.0.0'
-WORKERS_SERVER_PORT = 12121
-COMMANDERS_SERVER_IP = '0.0.0.0'
-COMMANDERS_SERVER_PORT = 21212
 
-MAX_PONG_TIME = 3 # Seconds
+PROCESSORS_SERVER_IP = '0.0.0.0'
+PROCESSORS_SERVER_PORT = 12121
+
+CLIENTS_SERVER_IP = '0.0.0.0'
+CLIENTS_SERVER_PORT = 21212
+
+MAX_PONG_WAIT_TIME = 3 # Seconds
 PING_INTERVAL = 5 # Seconds
 
 MAX_FAILURES = 10
@@ -17,17 +20,37 @@ MAX_FAILURES = 10
 IP_JOB_COUNT_LIMIT = 200
 IP_DURATION_LIMIT = 10 # Seconds
 
-ip_info = {}
+class Job:
+	def __init__(self,code,websocket,args,identity):
+		self.code = code
+		self.websocket = websocket
+		self.args = args
+		self.identity = identity
+		self.fails = 0
+
+class IpLimit:
+	def __init__(self,duration_limit,count_limit):
+		self.duration_limit = duration_limit
+		self.count_limit = count_limit
+		self.expiry_time = None
+		self.count = 0
+
+ip_limit = {}
 job_queue = asyncio.Queue()
 job_counter = 0
 jobs = {}
-worker_websockets = set()
-commander_websockets = set()
-worker_exists = asyncio.Condition()
+processor_websockets = set()
+client_websockets = set()
+processor_exists = asyncio.Condition()
+
 def print_info():
-	info_str = 'Workers: {}, Commanders: {}, Jobs: {}'.format(len(worker_websockets),len(commander_websockets),job_queue.qsize())  + ' ' * 20
+	info_str = 'Processors: {}, Clients: {}, Jobs: {}'.format(len(processor_websockets),len(client_websockets),job_queue.qsize())  + ' ' * 20
 	print(info_str,end='\r'*len(info_str))
-class WorkerProtocol(WebSocketServerProtocol):
+
+def now():
+	return int(time.time())
+
+class ProcessorProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
 	    pass
 
@@ -37,19 +60,23 @@ class WorkerProtocol(WebSocketServerProtocol):
 	async def onOpen(self):
 		self.last_ping_time = None
 		self.last_pong_time = None
-		self.jobs = [] # Add a new attribute for storing job ids
-		await worker_exists.acquire()
-		worker_websockets.add(self)
-		worker_exists.notify_all()
-		worker_exists.release()
+		
+		self.jobs = []
+		
+		await processor_exists.acquire()
+		processor_websockets.add(self)
+		processor_exists.notify_all()
+		processor_exists.release()
+		
 		print_info()
+		
 	async def onMessage(self, payload, isBinary):
-		self.last_pong_time = int(time.time())
+		self.last_pong_time = now()
 		msg = json.loads(payload.decode('utf8'))
 		job_id = msg["id"]
 		try:
-			jobs[job_id][1].result_available(job_id,msg["result"],False)
-			jobs[job_id][1].jobs.remove(job_id)
+			jobs[job_id].websocket.result_available(job_id,msg["result"],False)
+			jobs[job_id].websocket.jobs.remove(job_id)
 			del jobs[job_id]
 		except KeyError:
 			pass
@@ -58,14 +85,14 @@ class WorkerProtocol(WebSocketServerProtocol):
 		print_info()
 	
 	async def cleanup(self):
-		if self in worker_websockets:
-			worker_websockets.remove(self)
+		if self in processor_websockets:
+			processor_websockets.remove(self)
 		if hasattr(self,"jobs"):
 			for j in self.jobs:
 				try:
-					jobs[j][3]+=1
-					if jobs[j][3] > MAX_FAILURES:
-						jobs[j][1].result_available(j,None,True)
+					jobs[j].fails+=1
+					if jobs[j].fails > MAX_FAILURES:
+						jobs[j].websocket.result_available(j,None,True)
 						del jobs[j]
 					else:
 						await job_queue.put(j)
@@ -78,12 +105,12 @@ class WorkerProtocol(WebSocketServerProtocol):
 		await self.cleanup()
 		print_info()
 
-class CommanderProtocol(WebSocketServerProtocol):
+class ClientProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
 		self.ip = request.peer.split(':')[1]
-		if self.ip not in ip_info:
-			ip_info[self.ip] = {'count':0,'limit_reach_time':None,'limit_count':IP_JOB_COUNT_LIMIT,'limit_duration':IP_DURATION_LIMIT}
-		self.ip_info = ip_info[self.ip]
+		if self.ip not in ip_limit:
+			ip_limit[self.ip] = IpLimit(IP_DURATION_LIMIT,IP_JOB_COUNT_LIMIT)
+		self.ip_limit = ip_limit[self.ip]
 			
 	
 	async def onOpen(self):
@@ -91,7 +118,7 @@ class CommanderProtocol(WebSocketServerProtocol):
 		self.jobs = []
 		self.buff = []
 		self.buff_size = 1
-		commander_websockets.add(self)
+		client_websockets.add(self)
 		websocket_queue = asyncio.Queue()
 		print_info()
 	
@@ -99,11 +126,11 @@ class CommanderProtocol(WebSocketServerProtocol):
 		if job_id in jobs:
 			if error:
 				try:
-					self.sendMessage(json.dumps({"type":"result","results":[[None,jobs[job_id][4]]],"error":True}).encode('utf-8'),False)
+					self.sendMessage(json.dumps({"type":"result","results":[[None,jobs[job_id].identity]],"error":True}).encode('utf-8'),False)
 				except:
 					pass # Non of our business!
 			else:
-				self.buff.append([result,jobs[job_id][4]])
+				self.buff.append([result,jobs[job_id].identity])
 				if len(self.buff) >= self.buff_size:
 					self.flush()
 	
@@ -116,37 +143,36 @@ class CommanderProtocol(WebSocketServerProtocol):
 	
 	def info(self):
 		try:
-			self.sendMessage(json.dumps({"type":"info","workersCount":len(worker_websockets)}).encode('utf-8'),False)
+			self.sendMessage(json.dumps({"type":"info","processorsCount":len(processor_websockets)}).encode('utf-8'),False)
 		except:
 			pass # Non of our business!
 	
 	def limit_error(self):
-		remaining = self.ip_info['limit_duration'] - int(time.time()) + self.ip_info['limit_reach_time']
+		remaining = self.ip_limit.duration_limit - now() + self.ip_limit.expiry_time
 		self.sendMessage(json.dumps({"type":"limit","remaining":remaining}).encode('utf-8'),False)
 	
 	async def new_job(self,code,args,identity):
 		global job_counter
-		if self.ip_info['count'] < self.ip_info['limit_count']:
-			jobs[job_counter] = [code,self,args,0,identity]
+		if self.ip_limit.count < self.ip_limit.count_limit:
+			jobs[job_counter] = Job(code,self,args,identity)
 			await job_queue.put(job_counter)
 			self.jobs.append(job_counter)
 			job_counter += 1
-			self.ip_info['count'] += 1
+			self.ip_limit.count += 1
 			return False
 		else:
-			self.ip_info['limit_reach_time'] = int(time.time())
+			self.ip_limit.expiry_time = now()
 			self.limit_error()
 			return True
 	
 	async def onMessage(self, payload, isBinary):
 		
 		msg = json.loads(payload.decode('utf8'))
-		now = int(time.time())
 		
-		if self.ip_info['limit_reach_time']:
-			if now - self.ip_info['limit_reach_time'] > self.ip_info['limit_duration']:
-				self.ip_info['limit_reach_time'] = None
-				self.ip_info['count'] = 0
+		if self.ip_limit.expiry_time:
+			if now() - self.ip_limit.expiry_time > self.ip_limit.duration_limit:
+				self.ip_limit.expiry_time = None
+				self.ip_limit.count = 0
 			else:
 				self.limit_error()
 				return
@@ -179,8 +205,8 @@ class CommanderProtocol(WebSocketServerProtocol):
 			
 	
 	async def onClose(self, wasClean, code, reason):
-		if self in commander_websockets:
-			commander_websockets.remove(self)
+		if self in client_websockets:
+			client_websockets.remove(self)
 		if hasattr(self,"jobs"):
 			for j in self.jobs:
 				try:
@@ -189,30 +215,31 @@ class CommanderProtocol(WebSocketServerProtocol):
 					pass
 			del self.jobs[:]
 		print_info()
-async def balance_handler():
+
+async def balancer():
 	while True:
 		job = await job_queue.get()
-		await worker_exists.acquire()
-		await worker_exists.wait_for(lambda:len(worker_websockets) > 0)
-		worker_exists.release()
-		websocket = random.sample(worker_websockets, 1)[0]
+		await processor_exists.acquire()
+		await processor_exists.wait_for(lambda:len(processor_websockets) > 0)
+		processor_exists.release()
+		websocket = random.sample(processor_websockets, 1)[0]
 		if job in jobs:
 			try:
-				websocket.sendMessage(json.dumps({"id":job,"code":jobs[job][0],"args":jobs[job][2]}).encode('utf-8'),False)
-				websocket.last_ping_time = int(time.time())
+				websocket.sendMessage(json.dumps({"id":job,"code":jobs[job].code,"args":jobs[job].args}).encode('utf-8'),False)
+				websocket.last_ping_time = now()
 				websocket.jobs.append(job)
 			except:
 				job_queue.put(job) # Revive the job
 		print_info()
 
-async def watcher_handler():
+async def watcher():
 	while True:
 		must_close = []
-		for ws in worker_websockets:
+		for ws in processor_websockets:
 			if ws.last_ping_time:
 				if not ws.last_pong_time or ws.last_pong_time < ws.last_ping_time:
-					elapsed = int(time.time()) - ws.last_ping_time
-					if elapsed > MAX_PONG_TIME:
+					elapsed = now() - ws.last_ping_time
+					if elapsed > MAX_PONG_WAIT_TIME:
 						must_close.append(ws)
 		for ws in must_close:
 			await ws.cleanup()
@@ -221,8 +248,7 @@ async def watcher_handler():
 			except:
 				pass # Just to be sure
 		await asyncio.sleep(PING_INTERVAL)
-		
-		
+
 if __name__ == '__main__':
 	import asyncio
 	import ssl
@@ -232,14 +258,14 @@ if __name__ == '__main__':
 	ssl_ctx.load_cert_chain(certfile='/etc/letsencrypt/live/pooljs.ir/cert.pem',keyfile='/etc/letsencrypt/live/pooljs.ir/privkey.pem')
 	#ssl_ctx = None
 	
-	commanderFactory = WebSocketServerFactory()
-	commanderFactory.protocol = CommanderProtocol
-	commanderCoro = loop.create_server(commanderFactory, '0.0.0.0', 21212,ssl=ssl_ctx)
-	workerFactory = WebSocketServerFactory()
-	workerFactory.protocol = WorkerProtocol
-	workerCoro = loop.create_server(workerFactory, '0.0.0.0', 12121,ssl=ssl_ctx)
+	clientFactory = WebSocketServerFactory()
+	clientFactory.protocol = ClientProtocol
+	clientCoro = loop.create_server(clientFactory, '0.0.0.0', 21212,ssl=ssl_ctx)
+	processorFactory = WebSocketServerFactory()
+	processorFactory.protocol = ProcessorProtocol
+	processorCoro = loop.create_server(processorFactory, '0.0.0.0', 12121,ssl=ssl_ctx)
 	print_info()
-	all_tasks = asyncio.gather(commanderCoro,workerCoro,balance_handler(),watcher_handler())
+	all_tasks = asyncio.gather(clientCoro,processorCoro,balancer(),watcher())
 	try:
 		server = loop.run_until_complete(all_tasks)
 	except KeyboardInterrupt:
