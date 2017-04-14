@@ -13,6 +13,11 @@ MAX_PONG_TIME = 3 # Seconds
 PING_INTERVAL = 5 # Seconds
 
 MAX_FAILURES = 10
+
+IP_JOB_COUNT_LIMIT = 200
+IP_DURATION_LIMIT = 10 # Seconds
+
+ip_info = {}
 job_queue = asyncio.Queue()
 job_counter = 0
 jobs = {}
@@ -75,7 +80,11 @@ class WorkerProtocol(WebSocketServerProtocol):
 
 class CommanderProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
-	    pass
+		self.ip = request.peer.split(':')[1]
+		if self.ip not in ip_info:
+			ip_info[self.ip] = {'count':0,'limit_reach_time':None,'limit_count':IP_JOB_COUNT_LIMIT,'limit_duration':IP_DURATION_LIMIT}
+		self.ip_info = ip_info[self.ip]
+			
 	
 	async def onOpen(self):
 		global job_counter
@@ -111,35 +120,64 @@ class CommanderProtocol(WebSocketServerProtocol):
 		except:
 			pass # Non of our business!
 	
-	async def onMessage(self, payload, isBinary):
+	def limit_error(self):
+		remaining = self.ip_info['limit_duration'] - int(time.time()) + self.ip_info['limit_reach_time']
+		self.sendMessage(json.dumps({"type":"limit","remaining":remaining}).encode('utf-8'),False)
+	
+	async def new_job(self,code,args,identity):
 		global job_counter
-		msg = json.loads(payload.decode('utf8'))
-		if msg["type"] == "run":
-			jobs[job_counter] = [msg["code"],self,msg["args"],0,msg["id"]]
+		if self.ip_info['count'] < self.ip_info['limit_count']:
+			jobs[job_counter] = [code,self,args,0,identity]
 			await job_queue.put(job_counter)
 			self.jobs.append(job_counter)
 			job_counter += 1
+			self.ip_info['count'] += 1
+			return False
+		else:
+			self.ip_info['limit_reach_time'] = int(time.time())
+			self.limit_error()
+			return True
+	
+	async def onMessage(self, payload, isBinary):
+		
+		msg = json.loads(payload.decode('utf8'))
+		now = int(time.time())
+		
+		if self.ip_info['limit_reach_time']:
+			if now - self.ip_info['limit_reach_time'] > self.ip_info['limit_duration']:
+				self.ip_info['limit_reach_time'] = None
+				self.ip_info['count'] = 0
+			else:
+				self.limit_error()
+				return
+
+		if msg["type"] == "run":
+			await self.new_job(msg["code"],msg["args"],msg["id"])
+			
 		elif msg["type"] == "for":
 			for i in range(msg["start"],msg["end"]):
-				jobs[job_counter] = [msg["code"],self,[i] + msg["extraArgs"],0,msg["id"]]
-				await job_queue.put(job_counter)
-				self.jobs.append(job_counter)
-				job_counter += 1
+				if await self.new_job(msg["code"],[i] + msg["extraArgs"],msg["id"]):
+					break
+				
 		elif msg["type"] == "forEach":
 			for args in msg["argsList"]:
-				jobs[job_counter] = [msg["code"],self,args + msg["extraArgs"],0,msg["id"]]
-				await job_queue.put(job_counter)
-				self.jobs.append(job_counter)
-				job_counter += 1
+				if await self.new_job(msg["code"],args + msg["extraArgs"],msg["id"]):
+					break
+				
 		elif msg["type"] == "flush":
 			self.flush()
+			
 		elif msg["type"] == "info":
 			self.info()
+			
 		elif msg["type"] == "set":
 			if msg["property"] == "bufferSize":
 				self.buff_size = msg["value"]
 				self.flush()
+				
 		print_info()
+			
+	
 	async def onClose(self, wasClean, code, reason):
 		if self in commander_websockets:
 			commander_websockets.remove(self)

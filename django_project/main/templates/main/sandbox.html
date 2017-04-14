@@ -5,7 +5,9 @@
 {% block head %}
 	<script>
 		$(document).ready(function(){
-			
+			pool.onlimit = function(remaining){
+				alert("You have reached your limit! " + remaining + " seconds reamining...");
+			}
 			$("#custom-code-btn").click(function(){
 				$('#custom-code-result').empty();
 				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+$("#custom-code").val();

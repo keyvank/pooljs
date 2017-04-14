@@ -62,6 +62,11 @@
 					context.pool.oninfo(msg.workersCount);
 				}
 			}
+			else if(msg.type == "limit"){
+				if("onlimit" in context.pool){
+					context.pool.onlimit(msg.remaining);
+				}
+			}
 		};
 		sock.onclose = function(){
 		};

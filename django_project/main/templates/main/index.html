@@ -7,6 +7,9 @@
 	<script src="{% static 'js/raytracer.js' %}"></script>
 	<script>
 		$(document).ready(function(){
+			pool.onlimit = function(remaining){
+				alert("You have reached your limit! " + remaining + " seconds reamining...");
+			}
 			var ctx = document.getElementById("frame").getContext("2d");
 			var partsWidth = 8, partsHeight = 8;
 			var width = 160, height = 120;
