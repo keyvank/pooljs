@@ -169,28 +169,7 @@ class ClientProtocol(WebSocketServerProtocol):
 		
 		msg = json.loads(payload.decode('utf8'))
 		
-		if self.ip_limit.expiry_time:
-			if now() - self.ip_limit.expiry_time > self.ip_limit.duration_limit:
-				self.ip_limit.expiry_time = None
-				self.ip_limit.count = 0
-			else:
-				self.limit_error()
-				return
-
-		if msg["type"] == "run":
-			await self.new_job(msg["code"],msg["args"],msg["id"])
-			
-		elif msg["type"] == "for":
-			for i in range(msg["start"],msg["end"]):
-				if await self.new_job(msg["code"],[i] + msg["extraArgs"],msg["id"]):
-					break
-				
-		elif msg["type"] == "forEach":
-			for args in msg["argsList"]:
-				if await self.new_job(msg["code"],args + msg["extraArgs"],msg["id"]):
-					break
-				
-		elif msg["type"] == "flush":
+		if msg["type"] == "flush":
 			self.flush()
 			
 		elif msg["type"] == "info":
@@ -200,7 +179,29 @@ class ClientProtocol(WebSocketServerProtocol):
 			if msg["property"] == "bufferSize":
 				self.buff_size = msg["value"]
 				self.flush()
+		else:
+		
+			if self.ip_limit.expiry_time:
+				if now() - self.ip_limit.expiry_time > self.ip_limit.duration_limit:
+					self.ip_limit.expiry_time = None
+					self.ip_limit.count = 0
+				else:
+					self.limit_error()
+					return
+
+			if msg["type"] == "run":
+				await self.new_job(msg["code"],msg["args"],msg["id"])
 				
+			elif msg["type"] == "for":
+				for i in range(msg["start"],msg["end"]):
+					if await self.new_job(msg["code"],[i] + msg["extraArgs"],msg["id"]):
+						break
+					
+			elif msg["type"] == "forEach":
+				for args in msg["argsList"]:
+					if await self.new_job(msg["code"],args + msg["extraArgs"],msg["id"]):
+						break
+
 		print_info()
 			
 	
