@@ -2,7 +2,7 @@
 
 {% load staticfiles %}
 
-{% block head %}
+{% block scripts %}
 	{{ block.super }}
 	<script src="{% static 'js/raytracer.js' %}"></script>
 	<script>
@@ -29,20 +29,20 @@
 				ctx.putImageData(imgdata,x,y);
 			}
 
-			
+
 			$("#rayTracer-btn").click(function(){
 				ctx.clearRect(0, 0, width, height);
 				pool.setBufferSize(1);
 				pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion);
-				
+
 			});
-			
+
 			$("#custom-code-btn").click(function(){
 				$('#custom-code-result').empty();
 				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+$("#custom-code").val();
 				eval(code);
 			});
-			
+
 		});
 	</script>
 {% endblock %}
@@ -50,7 +50,7 @@
 
 {% block body %}
 	{{ block.super }}
-	
+
 	<h2>How <i>Distributed Browser Computing</i> can change the world?</h2>
 	<p>There are tons of algorithms which can be distributed between many computers and run enormously faster!</p>
 	<p>Using the power of web and browsers, we can bring supercomputing to the public!</p>
