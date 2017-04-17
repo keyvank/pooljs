@@ -1,3 +1,4 @@
+![alt text](https://cloud.githubusercontent.com/assets/4275654/25073821/f59bdf3e-2303-11e7-8ec7-c562c0dc24e8.png "Pool.js")
 # Pool.js
 ## What is Pool.js?
 Pool.js is a JavaScript platform for Distibuted Browser Computing. The platform consists of the Pool.js Server which handles the connections and distributes the tasks between the Processors, which are the browsers connected to the Pool.js Server (And they may have multiple cores) in order to run distributed scripts and the Clients which run their scripts on the Processors.
