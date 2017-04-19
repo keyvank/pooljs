@@ -84,7 +84,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			self.jobs.remove(job_id)
 		print_info()
 	
-	async def cleanup(self):
+	async def onClose(self, wasClean, code, reason):
 		if self in processor_websockets:
 			processor_websockets.remove(self)
 		if hasattr(self,"jobs"):
@@ -99,10 +99,6 @@ class ProcessorProtocol(WebSocketServerProtocol):
 				except KeyError:
 					pass
 			del self.jobs[:]
-		print_info()
-	
-	async def onClose(self, wasClean, code, reason):
-		await self.cleanup()
 		print_info()
 
 class ClientProtocol(WebSocketServerProtocol):
@@ -243,11 +239,7 @@ async def watcher():
 					if elapsed > MAX_PONG_WAIT_TIME:
 						must_close.append(ws)
 		for ws in must_close:
-			await ws.cleanup()
-			try:
-				ws.sendClose()
-			except:
-				pass # Just to be sure
+			ws.sendClose()
 		await asyncio.sleep(PING_INTERVAL)
 
 if __name__ == '__main__':
