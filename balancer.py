@@ -74,7 +74,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		job_id = msg["id"]
 		try:
 			jobs[job_id].websocket.result_available(job_id,msg["result"],False)
-			jobs[job_id].websocket.jobs.remove(job_id)
+			jobs[job_id].websocket.job_ids.remove(job_id)
 			del jobs[job_id]
 		except KeyError:
 			pass
@@ -237,7 +237,7 @@ async def balancer():
 							"args": jobs[job_id].args }
 				websocket.sendMessage(json.dumps(message).encode('utf-8'),False)
 				websocket.last_ping_time = now()
-				websocket.jobs.append(job_id)
+				websocket.job_ids.append(job_id)
 			except:
 				job_id_queue.put(job_id) # Revive the job
 
