@@ -5,7 +5,7 @@
 		var WEBSOCKET_PORT = 21212;
 		var WEBSOCKET_ADDRESS = "wss://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
 
-		var jobCounter = 0;
+		var jobCounter = 0; /* A counter as a generator for Job ids */
 		var sock = new WebSocket(WEBSOCKET_ADDRESS);
 		var listeners = [];
 
