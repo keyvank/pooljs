@@ -44,8 +44,8 @@ class IpLimit:
 		self.count = 0
 
 ip_limit = {}
-job_queue = asyncio.Queue()
-job_counter = 0
+job_id_queue = asyncio.Queue()
+job_id_counter = 0
 jobs = {}
 processor_websockets = set()
 client_websockets = set()
@@ -58,7 +58,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.jobs = []
+		self.job_ids = []
 		self.last_ping_time = None
 		self.last_pong_time = None
 	
@@ -78,25 +78,33 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			del jobs[job_id]
 		except KeyError:
 			pass
-		if job_id in self.jobs:
-			self.jobs.remove(job_id)
+		if job_id in self.job_ids:
+			self.job_ids.remove(job_id)
 	
 	async def onClose(self, wasClean, code, reason):
 		if self in processor_websockets:
 			processor_websockets.remove(self)
-		for j in self.jobs:
+		for job_id in self.job_ids:
 			try:
-				jobs[j].fails += 1
-				if jobs[j].fails > MAX_FAILURES:
-					jobs[j].websocket.result_available(j,None,True)
-					del jobs[j]
+				jobs[job_id].fails += 1
+				if jobs[job_id].fails > MAX_FAILURES:
+					jobs[job_id].websocket.result_available(job_id,None,True)
+					del jobs[job_id]
 				else:
-					await job_queue.put(j)
+					await job_id_queue.put(job_id)
 			except KeyError:
 				pass
-		del self.jobs[:]
+		del self.job_ids[:]
 
 class ClientProtocol(WebSocketServerProtocol):
+	
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.job_ids = []
+		self.buff = []
+		self.buff_size = 1
+		self.ip = None
+		self.ip_limit = None
 	
 	def onConnect(self, request):
 		self.ip = request.peer.split(':')[1]
@@ -104,13 +112,8 @@ class ClientProtocol(WebSocketServerProtocol):
 			ip_limit[self.ip] = IpLimit(IP_DURATION_LIMIT,IP_JOB_COUNT_LIMIT)
 		self.ip_limit = ip_limit[self.ip]
 	
-	async def onOpen(self):
-		global job_counter
-		self.jobs = []
-		self.buff = []
-		self.buff_size = 1
+	def onOpen(self):
 		client_websockets.add(self)
-		websocket_queue = asyncio.Queue()
 	
 	def result_available(self,job_id,result,error):
 		if job_id in jobs:
@@ -156,12 +159,12 @@ class ClientProtocol(WebSocketServerProtocol):
 			pass # None of our business!
 	
 	async def new_job(self,code,args,identity):
-		global job_counter
+		global job_id_counter
 		if self.ip_limit.count < self.ip_limit.count_limit:
-			jobs[job_counter] = Job(code,self,args,identity)
-			await job_queue.put(job_counter)
-			self.jobs.append(job_counter)
-			job_counter += 1
+			jobs[job_id_counter] = Job(code,self,args,identity)
+			await job_id_queue.put(job_id_counter)
+			self.job_ids.append(job_id_counter)
+			job_id_counter += 1
 			self.ip_limit.count += 1
 			return False
 		else:
@@ -211,27 +214,32 @@ class ClientProtocol(WebSocketServerProtocol):
 			client_websockets.remove(self)
 		
 		if hasattr(self,"jobs"):
-			for j in self.jobs:
+			for j in self.job_ids:
 				try:
 					del jobs[j]
 				except KeyError:
 					pass
-			del self.jobs[:]
+			del self.job_ids[:]
 
 async def balancer():
 	while True:
-		job = await job_queue.get()
+		job_id = await job_id_queue.get()
+		
 		await processor_exists.acquire()
 		await processor_exists.wait_for(lambda:len(processor_websockets) > 0)
 		processor_exists.release()
+		
 		websocket = random.sample(processor_websockets, 1)[0]
-		if job in jobs:
+		if job_id in jobs:
 			try:
-				websocket.sendMessage(json.dumps({"id":job,"code":jobs[job].code,"args":jobs[job].args}).encode('utf-8'),False)
+				message = { "id": job_id,
+							"code": jobs[job_id].code,
+							"args": jobs[job_id].args }
+				websocket.sendMessage(json.dumps(message).encode('utf-8'),False)
 				websocket.last_ping_time = now()
-				websocket.jobs.append(job)
+				websocket.jobs.append(job_id)
 			except:
-				job_queue.put(job) # Revive the job
+				job_id_queue.put(job_id) # Revive the job
 
 async def watcher():
 	while True:
