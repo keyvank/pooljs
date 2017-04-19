@@ -213,13 +213,12 @@ class ClientProtocol(WebSocketServerProtocol):
 		if self in client_websockets:
 			client_websockets.remove(self)
 		
-		if hasattr(self,"jobs"):
-			for j in self.job_ids:
-				try:
-					del jobs[j]
-				except KeyError:
-					pass
-			del self.job_ids[:]
+		for j in self.job_ids:
+			try:
+				del jobs[j]
+			except KeyError:
+				pass
+		del self.job_ids[:]
 
 async def balancer():
 	while True:
