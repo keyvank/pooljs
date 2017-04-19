@@ -111,11 +111,11 @@
 							// Send null as the result of Jobs taking too long to respond
 							sock.send(JSON.stringify(job_result));
 						}
-						notify();
 					}
 				}
 			}
 			fillPool(); // Fill the pool as some Workers have been terminated and removed
+			notify();
 			setTimeout(badJobKiller, MAX_JOB_TIME/2);
 		}
 
