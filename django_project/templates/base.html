@@ -19,7 +19,7 @@
 		<h1>Pool.js</h1>
 		<a href="{% url 'main_index' %}">Index</a> - <a href="https://github.com/keyvank/pooljs#pooljs">Docs</a> - <a href="{% url 'main_sandbox' %}">Sandbox</a> - <a href="{% url 'main_featured' %}">Featured Projects!</a>
 		<p>Distribute your JavaScript code to thousands of processors!</p>
-		<p>Processors available: <span id="num-workers">0</span></p>
+		<p>Processors available: <span id="num-workers">0</span> Jobs count: <span id="num-jobs">0</span></p>
 		{% block body %} {% endblock %}
 		<div>Copyright (C) 2017 - Keyvan M. Kambakhsh</div>
 
@@ -29,10 +29,13 @@
 		<script>
 			$(document).ready(function(){
 				var numWorkers = 0;
+				var numJobs = 0;
 				function info(){
-					pool.oninfo = function(workersCount){
+					pool.oninfo = function(workersCount,jobsCount){
 						numWorkers = workersCount;
+						numJobs = jobsCount;
 						$("#num-workers").text(numWorkers);
+						$("#num-jobs").text(numJobs);
 					}
 					pool.info();
 					setTimeout(info,5000);
