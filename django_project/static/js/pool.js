@@ -59,7 +59,7 @@
 			}
 			else if(msg.type == "info"){
 				if("oninfo" in context.pool){
-					context.pool.oninfo(msg.processorsCount);
+					context.pool.oninfo(msg.processorsCount, msg.jobsCount);
 				}
 			}
 			else if(msg.type == "limit"){
