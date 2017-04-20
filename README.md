@@ -77,4 +77,5 @@ pool.for(0,10,function(i,myVar1,myVar2){
 
 ## Contribution
 You can help this project by creating cool stuff on top of it!
-
+## Build status
+[![Build Status](https://travis-ci.org/keyvank/pooljs.svg?branch=master)](https://travis-ci.org/keyvank/pooljs)
