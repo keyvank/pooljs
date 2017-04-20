@@ -41,11 +41,23 @@
 
 		var sock = null;
 
+		function freeWorkersCount() {
+			var count = 0;
+			for(var i = 0; i < workerPool.length; i++) {
+				if(!workerPool[i].job) {
+					count++;
+				}
+			}
+			return count;
+		}
+
 		// Notify that there is a free Worker to execute a new Job
 		function notify() {
-			var new_job = jobs.shift();
-			if(new_job)
-				balance(new_job,false);
+			for(var i = 0; i < freeWorkersCount(); i++) {
+				var new_job = jobs.shift();
+				if(new_job)
+					balance(new_job,false);
+			}
 		}
 
 		function response(event,worker) {
