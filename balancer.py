@@ -9,8 +9,9 @@ import json
 import random
 import time
 import os
+import sys
 
-lg.basicConfig(filename = 'pool.log', level = lg.DEBUG)
+lg.basicConfig(stream = sys.stdout , level = lg.DEBUG)
 
 PROCESSORS_SERVER_IP = '0.0.0.0'
 PROCESSORS_SERVER_PORT = 12121
@@ -102,7 +103,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			except KeyError:
 				pass
 		del self.job_ids[:]
-		lg.debug("Processor closed. Cleanly?: {}".format(wasClean))
+		lg.debug("Processor closed. Cleanly?: {}. Code: {}, Reason: {}".format(wasClean, code, reason))
 
 class ClientProtocol(WebSocketServerProtocol):
 
@@ -242,7 +243,6 @@ async def balancer():
 		websocket = random.sample(processor_websockets, 1)[0]
 		if job_id in jobs:
 			try:
-				lg.debug("Begin sending a Job to a Processor...")
 				message = { "id": job_id,
 							"code": jobs[job_id].code,
 							"args": jobs[job_id].args }
@@ -251,7 +251,7 @@ async def balancer():
 				websocket.sendMessage(json.dumps(message).encode('utf-8'),False)
 				websocket.job_ids.append(job_id)
 			except:
-				lg.debug("An exception occurred in sendMessage")
+				lg.debug("An exception occurred while sending a Job.")
 				job_id_queue.put(job_id) # Revive the job
 
 # Close not-responding sockets and revive Jobs
