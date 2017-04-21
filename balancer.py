@@ -10,7 +10,7 @@ import random
 import time
 import os
 
-lg.basicConfig(filename = 'pool.log', level = logging.DEBUG)
+lg.basicConfig(filename = 'pool.log', level = lg.DEBUG)
 
 PROCESSORS_SERVER_IP = '0.0.0.0'
 PROCESSORS_SERVER_PORT = 12121
