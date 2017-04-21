@@ -3,11 +3,14 @@
 from autobahn.asyncio.websocket \
 	import WebSocketServerProtocol, WebSocketServerFactory
 
+import logging as lg
 import asyncio
 import json
 import random
 import time
 import os
+
+lg.basicConfig(filename = 'pool.log', level = logging.DEBUG)
 
 PROCESSORS_SERVER_IP = '0.0.0.0'
 PROCESSORS_SERVER_PORT = 12121
@@ -246,6 +249,7 @@ async def balancer():
 				websocket.sendMessage(json.dumps(message).encode('utf-8'),False)
 				websocket.job_ids.append(job_id)
 			except:
+				lg.debug("An exception occurred in sendMessage")
 				job_id_queue.put(job_id) # Revive the job
 
 # Close not-responding sockets and revive Jobs
@@ -259,6 +263,7 @@ async def watcher():
 					if elapsed > MAX_PONG_WAIT_TIME:
 						must_close.append(ws)
 		for ws in must_close:
+			lg.debug("Processor took too long to respond! Closing...")
 			ws.sendClose()
 		await asyncio.sleep(PING_INTERVAL)
 
