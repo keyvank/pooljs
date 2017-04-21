@@ -241,8 +241,9 @@ async def balancer():
 				message = { "id": job_id,
 							"code": jobs[job_id].code,
 							"args": jobs[job_id].args }
+				if not websocket.last_ping_time or websocket.last_ping_time < websocket.last_pong_time:
+					websocket.last_ping_time = now()
 				websocket.sendMessage(json.dumps(message).encode('utf-8'),False)
-				websocket.last_ping_time = now()
 				websocket.job_ids.append(job_id)
 			except:
 				job_id_queue.put(job_id) # Revive the job
