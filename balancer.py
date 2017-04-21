@@ -102,6 +102,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			except KeyError:
 				pass
 		del self.job_ids[:]
+		lg.debug("Processor closed. Cleanly?: {}".format(wasClean))
 
 class ClientProtocol(WebSocketServerProtocol):
 
@@ -241,6 +242,7 @@ async def balancer():
 		websocket = random.sample(processor_websockets, 1)[0]
 		if job_id in jobs:
 			try:
+				lg.debug("Begin sending a Job to a Processor...")
 				message = { "id": job_id,
 							"code": jobs[job_id].code,
 							"args": jobs[job_id].args }
