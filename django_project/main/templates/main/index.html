@@ -12,7 +12,7 @@
 			}
 			var ctx = document.getElementById("frame").getContext("2d");
 			var partsWidth = 8, partsHeight = 8;
-			var width = 400, height = 300;
+			var width = 360, height = 270;
 			function drawRegion(x,y,data){
 				var h=data.length;
 				var w=data[0].length;
@@ -91,10 +91,10 @@
 			</div>
 			<div class="col-md-5" style="text-align:center;">
 				<h2 style="text-align:center;">Photorealistic 3D Rendering</h2>
-				<canvas id="frame" width="400" height="300" style="border:1px solid #000000;margin-left:auto;margin-right:auto;display:block" class="mt-4 mb-4">
+				<canvas id="frame" width="360" height="270" style="border:1px solid #000000;margin-left:auto;margin-right:auto;display:block" class="mt-4 mb-4">
 				</canvas>
-				<button id="rayTracer-btn-single" class="btn btn-primary mr-1">Run on a single browser!</button>
-				<button id="rayTracer-btn" class="btn btn-primary ml-1">Run on 64 browsers!</button>
+				<button id="rayTracer-btn-single" class="btn btn-primary m-1">Run on a single browser!</button>
+				<button id="rayTracer-btn" class="btn btn-primary m-1">Run on 64 browsers!</button>
 			</div>
 		</div>
 	</div>
@@ -103,7 +103,7 @@
 			<div class="col-md-12">
 				<h2 style="text-align:center;">So let's make the world a better place to live!</h2>
 				<h3 style="text-align:center;">Put this script in your website!</h3>
-				<div style="font-size:28px;text-align:center;">
+				<div style="font-size:28px;text-align:center;overflow:hidden">
 					<textarea id="put-script" style="height:auto;">&lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt;</textarea>
 				</div>
 			</div>
