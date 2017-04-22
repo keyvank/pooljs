@@ -12,7 +12,7 @@
 			}
 			var ctx = document.getElementById("frame").getContext("2d");
 			var partsWidth = 8, partsHeight = 8;
-			var width = 160, height = 120;
+			var width = 400, height = 300;
 			function drawRegion(x,y,data){
 				var h=data.length;
 				var w=data[0].length;
@@ -39,7 +39,7 @@
 
 			$("#custom-code-btn").click(function(){
 				$('#custom-code-result').empty();
-				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+$("#custom-code").val();
+				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+editor.getValue();
 				eval(code);
 			});
 
@@ -50,10 +50,29 @@
 
 {% block body %}
 	{{ block.super }}
-
-	<div class="container">
+	<div class="container-fluid" style="margin-bottom:200px;">
 		<div class="row">
-			<div class="col-md-7">
+			<div class="offset-md-1 col-md-4" style="margin-top:200px;">
+				<img style="width:40%; margin-left:auto; margin-right:auto;display:block;" src="{% static 'img/logo.svg' %}" alt="Pool.js"/>
+				<h1 class="display-4 text-center">Pool.js</h1>
+				<h2 class="display-5 text-center">Browser computing unleashed!</h2>
+				<div class="text-center">Processors available: <span id="num-workers">0</span></div>
+				<div class="text-center">Jobs count: <span id="num-jobs">0</span></div>
+			</div>
+			<div class="offset-md-1 col-md-5" style="margin-top:200px;font-size:18px;">
+				<textarea id="header-editor" style="height:auto;">pool.for(0,10,function(i){
+	return i*i;
+}).result(function(result){
+	console.log(result);
+});</textarea>
+				<div id="custom-code-result" class="p-2" style="background:black;color:white;height:80px;font-size:20px;"></div>
+				<button id="custom-code-btn" class="btn btn-primary" style="margin:10px;">Run!</button>
+			</div>
+		</div>
+	</div>
+	<div class="container-fluid" style="margin-bottom:200px;">
+		<div class="row">
+			<div class="offset-md-1 col-md-6">
 				<h2>How <i>Distributed Browser Computing</i> can change the world?</h2>
 				<p>There are tons of algorithms which can be distributed between many computers and run enormously faster!</p>
 				<p>Using the power of web and browsers, we can bring supercomputing to the public!</p>
@@ -70,27 +89,25 @@
 					<li>And much more ...!</li>
 				</ul>
 			</div>
-			<div class="col-md-5">
+			<div class="col-md-5" style="text-align:center;">
+				<h2 style="text-align:center;">Photorealistic 3D Rendering</h2>
+				<canvas id="frame" width="400" height="300" style="border:1px solid #000000;margin-left:auto;margin-right:auto;display:block" class="mt-4 mb-4">
+				</canvas>
+				<button id="rayTracer-btn-single" class="btn btn-primary mr-1">Run on a single browser!</button>
+				<button id="rayTracer-btn" class="btn btn-primary ml-1">Run on 64 browsers!</button>
+			</div>
+		</div>
+	</div>
+	<div class="container" style="margin-top:300px;margin-bottom:300px;">
+		<div class="row">
+			<div class="col-md-12">
+				<h2 style="text-align:center;">So let's make the world a better place to live!</h2>
+				<h3 style="text-align:center;">Put this script in your website!</h3>
+				<div style="font-size:28px;text-align:center;">
+					<textarea id="put-script" style="height:auto;">&lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt;</textarea>
+				</div>
 			</div>
 		</div>
 	</div>
 
-
-	<h2>So let's make the world a better place to live! Put this script in your website!</h2>
-	<pre>&lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt;</pre>
-	<h2>Implement your distributed algorithms</h2>
-	<textarea id="custom-code" style="width:350px;height:120px;">pool.for(0,10,function(i){
-return i*i;
-}).result(function(result){
-console.log(result);
-});</textarea>
-	<button id="custom-code-btn">Distribute my code!</button>
-	<div>Result:</div>
-	<div id="custom-code-result" style="background:black;color:white;height:60px;width:400px;font-size:20px;"></div>
-	<h2>Some interesting works running on this platform</h2>
-	<h3>Photorealistic 3D rendering!</h3>
-	<canvas id="frame" width="160" height="120" style="border:1px solid #000000;">
-	</canvas>
-	<button id="rayTracer-btn-single">Run on a single browser!</button>
-	<button id="rayTracer-btn">Run on 64 browsers!</button>
 {% endblock %}

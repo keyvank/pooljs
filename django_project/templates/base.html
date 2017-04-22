@@ -42,28 +42,10 @@
 		    </ul>
 		  </div>
 		</nav>
-		<div class="container-fluid" style="margin-bottom:200px;">
-			<div class="row">
-				<div class="offset-md-1 col-md-4" style="margin-top:200px;">
-					<img style="width:40%; margin-left:auto; margin-right:auto;display:block;" src="{% static 'img/logo.svg' %}" alt="Pool.js"/>
-					<h1 style="text-align:center;" class="display-4">Pool.js</h1>
-					<h2 style="text-align:center;" class="display-5">Browser computing unleashed!</h2>
-				</div>
-				<div class="offset-md-1 col-md-5" style="margin-top:200px;font-size:18px;">
-					<textarea id="header-editor" style="height:auto;">pool.for(0,10,function(i){
-	return i*i;
-}).result(function(result){
-	console.log(result);
-});</textarea>
-					<button class="btn btn-primary" style="margin:10px;">Run!</button>
-				</div>
-			</div>
-		</div>
-
 
 		{% block body %} {% endblock %}
-		<p>Processors available: <span id="num-workers">0</span> Jobs count: <span id="num-jobs">0</span></p>
-		<div>Copyright (C) 2017 - Keyvan M. Kambakhsh</div>
+
+		<div class="text-center m-2">Copyright (C) 2017 - Keyvan M. Kambakhsh</div>
 
 		<script src="{% static 'js/processor.js' %}"></script>
 		<script src="{% static 'js/pool.js' %}"></script>
@@ -90,12 +72,20 @@
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/javascript/javascript.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/xml/xml.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/htmlmixed/htmlmixed.min.js"></script>
 		<script>
 		  var editor = CodeMirror.fromTextArea(document.getElementById("header-editor"), {
 		    lineNumbers: true,
 				mode: "javascript",
 				theme: "base16-dark"
 		  });
+			var editor2 = CodeMirror.fromTextArea(document.getElementById("put-script"), {
+				mode: "htmlmixed",
+				readOnly: true,
+				theme: "base16-dark"
+		  });
+			editor2.setSize("100%","54px");
 		</script>
 	</body>
 </html>
