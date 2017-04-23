@@ -10,22 +10,34 @@
 			}
 			$("#custom-code-btn").click(function(){
 				$('#custom-code-result').empty();
-				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+$("#custom-code").val();
+				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+editor.getValue();
 				eval(code);
 			});
+			var editor = CodeMirror.fromTextArea(document.getElementById("header-editor"), {
+		    lineNumbers: true,
+				mode: "javascript",
+				theme: "base16-dark"
+		  });
+			editor.setSize("100%","50vh");
 		});
 	</script>
 {% endblock %}
 
 
 {% block body %}
-	<h2>Sandbox!</h2>
-	<textarea id="custom-code" style="width:350px;height:120px;">pool.for(0,10,function(i){
-return i*i;
+	{{ block.super }}
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12" style="font-size:18px; margin-top:120px;">
+				<textarea id="header-editor" style="height:auto;">pool.for(0,10,function(i){
+	return i*i;
 }).result(function(result){
-console.log(result);
+	console.log(result);
 });</textarea>
-	<div>Result:</div>
-	<div id="custom-code-result" style="background:black;color:white;height:60px;width:400px;font-size:20px;"></div>
-	<button id="custom-code-btn">Distribute my code!</button>
+				<div id="custom-code-result" class="p-2" style="background:black;color:white;height:20vh;font-size:20px;"></div>
+				<button id="custom-code-btn" class="btn btn-primary" style="margin:10px;">Run!</button>
+			</div>
+		</div>
+	</div>
 {% endblock %}
+{% block footer %}{% endblock %}

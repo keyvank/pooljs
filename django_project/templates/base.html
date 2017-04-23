@@ -45,7 +45,9 @@
 
 		{% block body %} {% endblock %}
 
-		<div class="text-center m-2">Copyright (C) 2017 - Keyvan M. Kambakhsh</div>
+		{% block footer %}
+			<div class="text-center m-2">Copyright (C) 2017 - Keyvan M. Kambakhsh</div>
+		{% endblock %}
 
 		<script src="{% static 'js/processor.js' %}"></script>
 		<script src="{% static 'js/pool.js' %}"></script>
