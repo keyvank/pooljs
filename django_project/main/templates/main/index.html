@@ -42,7 +42,18 @@
 				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+editor.getValue();
 				eval(code);
 			});
-
+			var editor = CodeMirror.fromTextArea(document.getElementById("header-editor"), {
+		    lineNumbers: true,
+				mode: "javascript",
+				theme: "base16-dark"
+		  });
+			var editor2 = CodeMirror.fromTextArea(document.getElementById("put-script"), {
+				mode: "htmlmixed",
+				readOnly: true,
+				theme: "base16-dark",
+				scrollbarStyle: "null"
+		  });
+			editor2.setSize("100%","54px");
 		});
 	</script>
 {% endblock %}

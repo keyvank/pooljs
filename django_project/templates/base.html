@@ -67,26 +67,13 @@
 				pool.onopen = function(){info();}
 			});
 		</script>
-		{% block scripts %} {% endblock %}
+
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha256-gL1ibrbVcRIHKlCO5OXOPC/lZz/gpdApgQAzskqqXp8=" crossorigin="anonymous"></script>
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/javascript/javascript.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/xml/xml.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/htmlmixed/htmlmixed.min.js"></script>
-		<script>
-		  var editor = CodeMirror.fromTextArea(document.getElementById("header-editor"), {
-		    lineNumbers: true,
-				mode: "javascript",
-				theme: "base16-dark"
-		  });
-			var editor2 = CodeMirror.fromTextArea(document.getElementById("put-script"), {
-				mode: "htmlmixed",
-				readOnly: true,
-				theme: "base16-dark",
-				scrollbarStyle: "null"
-		  });
-			editor2.setSize("100%","54px");
-		</script>
+		{% block scripts %} {% endblock %}
 	</body>
 </html>
