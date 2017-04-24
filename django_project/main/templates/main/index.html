@@ -64,7 +64,7 @@
 
 {% block body %}
 	{{ block.super }}
-	<div class="container-fluid" style="margin-bottom:20vh;">
+	<div class="container-fluid" style="padding-bottom:15vh;">
 		<div class="row">
 			<div class="offset-md-1 col-md-4" style="margin-top:30vh;">
 				<img style="width:40%; margin-left:auto; margin-right:auto;display:block;" src="{% static 'img/logo.svg' %}" alt="Pool.js"/>
@@ -84,10 +84,17 @@
 			</div>
 		</div>
 	</div>
-	<div class="container-fluid" style="margin-bottom:30vh;">
+	<div class="container-fluid" style="padding-bottom:5vh;padding-top:5vh;background-color:black;">
 		<div class="row">
+			<div class="col-md-5" style="text-align:center;color:#DDD">
+				<h2 style="text-align:center;color:white;">Photorealistic 3D Rendering</h2>
+				<canvas id="frame" width="360" height="270" style="border:1px solid #000000;margin-left:auto;margin-right:auto;display:block;width:90%;background-color:#111;" class="mt-4 mb-4">
+				</canvas>
+				<button id="rayTracer-btn-single" class="btn btn-primary m-1">Run on a single browser!</button>
+				<button id="rayTracer-btn" class="btn btn-primary m-1">Run on 64 browsers!</button>
+			</div>
 			<div class="offset-md-1 col-md-6">
-				<h2>How <i>Distributed Browser Computing</i> can change the world?</h2>
+				<h2 style="color:white;">How <i>Distributed Browser Computing</i> can change the world?</h2>
 				<p>There are tons of algorithms which can be distributed between many computers and run enormously faster!</p>
 				<p>Using the power of web and browsers, we can bring supercomputing to the public!</p>
 				<p>Pool.js can help us:</p>
@@ -103,21 +110,14 @@
 					<li>And much more ...!</li>
 				</ul>
 			</div>
-			<div class="col-md-5" style="text-align:center;">
-				<h2 style="text-align:center;">Photorealistic 3D Rendering</h2>
-				<canvas id="frame" width="360" height="270" style="border:1px solid #000000;margin-left:auto;margin-right:auto;display:block;width:90%" class="mt-4 mb-4">
-				</canvas>
-				<button id="rayTracer-btn-single" class="btn btn-primary m-1">Run on a single browser!</button>
-				<button id="rayTracer-btn" class="btn btn-primary m-1">Run on 64 browsers!</button>
-			</div>
 		</div>
 	</div>
-	<div class="container" style="margin-bottom:40vh;">
+	<div class="container-fluid" style="padding-top:30vh;padding-bottom:40vh;">
 		<div class="row">
 			<div class="col-md-12">
 				<h2 style="text-align:center;">So let's make the world a better place to live!</h2>
 				<h3 style="text-align:center;">Put this script in your website!</h3>
-				<div style="font-size:28px;text-align:center;overflow:hidden">
+				<div style="font-size:28px;text-align:center;overflow:hidden;max-width:90%;margin:0 auto;">
 					<textarea id="put-script" style="height:auto;">&lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt;</textarea>
 				</div>
 			</div>
