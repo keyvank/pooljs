@@ -64,16 +64,16 @@
 
 {% block body %}
 	{{ block.super }}
-	<div class="container-fluid" style="margin-bottom:200px;">
+	<div class="container-fluid" style="margin-bottom:20vh;">
 		<div class="row">
-			<div class="offset-md-1 col-md-4" style="margin-top:200px;">
+			<div class="offset-md-1 col-md-4" style="margin-top:30vh;">
 				<img style="width:40%; margin-left:auto; margin-right:auto;display:block;" src="{% static 'img/logo.svg' %}" alt="Pool.js"/>
 				<h1 class="display-4 text-center">Pool.js</h1>
 				<h2 class="display-5 text-center">Browser computing unleashed!</h2>
 				<div class="text-center">Processors available: <span id="num-workers">0</span></div>
 				<div class="text-center">Jobs count: <span id="num-jobs">0</span></div>
 			</div>
-			<div class="offset-md-1 col-md-5" style="margin-top:200px;font-size:18px;">
+			<div class="offset-md-1 col-md-5" style="margin-top:25vh;font-size:18px;">
 				<textarea id="header-editor" style="height:auto;">pool.for(0,10,function(i){
   return i*i;
 }).result(function(result){
@@ -84,7 +84,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="container-fluid" style="margin-bottom:200px;">
+	<div class="container-fluid" style="margin-bottom:30vh;">
 		<div class="row">
 			<div class="offset-md-1 col-md-6">
 				<h2>How <i>Distributed Browser Computing</i> can change the world?</h2>
@@ -112,7 +112,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="container" style="margin-top:300px;margin-bottom:300px;">
+	<div class="container" style="margin-bottom:40vh;">
 		<div class="row">
 			<div class="col-md-12">
 				<h2 style="text-align:center;">So let's make the world a better place to live!</h2>
