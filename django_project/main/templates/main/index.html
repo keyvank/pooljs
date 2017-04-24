@@ -33,8 +33,11 @@
 			$("#rayTracer-btn").click(function(){
 				ctx.clearRect(0, 0, width, height);
 				pool.setBufferSize(1);
-				pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion);
-
+				pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion,true);
+			});
+			$("#rayTracer-btn-single").click(function(){
+				ctx.clearRect(0, 0, width, height);
+				pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion,false);
 			});
 
 			$("#custom-code-btn").click(function(){

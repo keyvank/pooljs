@@ -1,6 +1,34 @@
 (function(ctx){
-	ctx.pool.rayTracer = function(width,height,partsWidth,partsHeight,callback){
-		ctx.pool.for(0,partsWidth*partsHeight,function(ind,width,height,partsWidth,partsHeight){
+	
+	function createWorker(foo) {
+		var str = foo.toString().match(/^\s*function\s*\(\s*\)\s*\{(([\s\S](?!\}$))*[\s\S])/)[1];
+		return new Worker(window.URL.createObjectURL(new Blob([str],{type:'text/javascript'})));
+	}
+	var workerPool = [];
+	function fillPool() {
+		while(workerPool.length < navigator.hardwareConcurrency) {
+			var worker = createWorker(function(){
+				var self = this;
+				this.addEventListener("message", function(event) {
+					var job = event.data;
+					var src = "var fn = " + job.code;
+					eval(src);
+					self.postMessage(fn.apply(this, job.args));
+				}, false);
+			});
+			workerPool.push(worker);
+		}
+	}
+	var counter = 0;
+	function balance(job,callback) {
+		var w = workerPool[counter % workerPool.length];
+		w.onmessage = function(event){callback(event.data);};
+		w.postMessage(job);
+		counter++;
+	}
+
+	ctx.pool.rayTracer = function(width,height,partsWidth,partsHeight,callback,onpool=true){
+		function f(ind,width,height,partsWidth,partsHeight){
 			function dot(a,b){return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];}
 			function cross(a,b){return [a[1]*b[2] - a[2]*b[1],a[2]*b[0] - a[0]*b[2],a[0]*b[1] - a[1]*b[0]];}
 			function sum(a,b){return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
@@ -83,9 +111,9 @@
 			function traceRay(ray,depth=0){
 				if(depth>4)
 					return [0,0,0];
-				
+
 				var near = nearestObjIsect(ray);
-				
+
 				if(!near)
 					return null;
 				else{
@@ -100,12 +128,12 @@
 						}
 					}
 					var col = ewmul(ewmul(near[1][3],near[0].diffuse),light);
-					
+
 					var reflCol=traceRay([rpos,near[1][2]],depth+1);
 					var refl=[0,0,0];
 					if(reflCol)
 						 refl = mul(reflCol,near[0].reflection);
-						 
+
 					col = sum(col,refl);
 					return col;
 				}
@@ -133,9 +161,19 @@
 				data.push(row);
 			}
 			return [widthSize*x,heightSize*y,data];
-		},[width,height,partsWidth,partsHeight]).result(function(result,error){
-			if(!error)
-				callback(result[0],result[1],result[2]);
-		});
+		}
+		if(onpool){
+			ctx.pool.for(0,partsWidth*partsHeight,f,[width,height,partsWidth,partsHeight]).result(function(result,error){
+				if(!error)
+					callback(result[0],result[1],result[2]);
+			});
+		}else{
+			fillPool();
+			for(var i=0;i < partsWidth*partsHeight; i++){
+				balance({code:f.toString(),args:[i,width,height,partsWidth,partsHeight]},function(result){
+					callback(result[0],result[1],result[2]);
+				});
+			}
+		}
 	}
 }(this));
