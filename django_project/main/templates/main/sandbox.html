@@ -6,7 +6,7 @@
 	<script>
 		$(document).ready(function(){
 			pool.onlimit = function(remaining){
-				alert("You have reached your limit! " + remaining + " seconds reamining...");
+				alert("You have reached your limit! " + (remaining/1000) + " seconds reamining...");
 			}
 			$("#custom-code-btn").click(function(){
 				$('#custom-code-result').empty();

@@ -8,7 +8,7 @@
 	<script>
 		$(document).ready(function(){
 			pool.onlimit = function(remaining){
-				alert("You have reached your limit! " + remaining + " seconds reamining...");
+				alert("You have reached your limit! " + (remaining/1000) + " seconds reamining...");
 			}
 			var ctx = document.getElementById("frame").getContext("2d");
 			var partsWidth = 8, partsHeight = 8;
