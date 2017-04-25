@@ -19,13 +19,13 @@ PROCESSORS_SERVER_PORT = 12121
 CLIENTS_SERVER_IP = '0.0.0.0'
 CLIENTS_SERVER_PORT = 21212
 
-MAX_PONG_WAIT_TIME = 3000 # Miliseconds
+MAX_PONG_WAIT_TIME = 3000 # Milliseconds
 PING_INTERVAL = 5 # Seconds
 
 MAX_FAILURES = 3
 
 IP_JOB_COUNT_LIMIT = 200
-IP_DURATION_LIMIT = 10 # Seconds
+IP_DURATION_LIMIT = 10000 # Milliseconds
 
 SSL_CERT_FILE = '/etc/letsencrypt/live/pooljs.ir/cert.pem'
 SSL_KEY_FILE = '/etc/letsencrypt/live/pooljs.ir/privkey.pem'
