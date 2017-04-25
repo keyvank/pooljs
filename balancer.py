@@ -91,7 +91,6 @@ class ProcessorProtocol(WebSocketServerProtocol):
 	def cleanup(self):
 		if self in processor_websockets:
 			processor_websockets.remove(self)
-		ids = []
 		for job_id in self.job_ids:
 			try:
 				jobs[job_id].fails += 1
@@ -101,16 +100,13 @@ class ProcessorProtocol(WebSocketServerProtocol):
 					jobs[job_id].websocket.result_available(job_id,None,True)
 					del jobs[job_id]
 				else:
-					ids.append(job_id)
+					await job_id_queue.put(job_id)
 			except KeyError:
 				pass
 		del self.job_ids[:]
-		return ids
 		
 	async def onClose(self, wasClean, code, reason):
-		ids = self.cleanup()
-		for job_id in ids:
-			await job_id_queue.put(job_id)
+		await self.cleanup()
 		lg.debug("Processor closed. Cleanly?: {}. Code: {}, Reason: {}".format(wasClean, code, reason))
 
 class ClientProtocol(WebSocketServerProtocol):
@@ -274,9 +270,7 @@ async def watcher():
 						must_close.append(ws)
 		for ws in must_close:
 			lg.debug("Processor took too long to respond! Closing...")
-			ids = ws.cleanup()
-			for job_id in ids:
-				await job_id_queue.put(job_id)
+			await ws.cleanup()
 			ws.sendClose()
 		await asyncio.sleep(PING_INTERVAL)
 
