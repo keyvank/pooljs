@@ -57,7 +57,7 @@ processor_exists = asyncio.Condition()
 
 # Get current time in seconds
 def now():
-	return int(time.time())
+	return int(time.time() * 1000.0)
 
 class ProcessorProtocol(WebSocketServerProtocol):
 
