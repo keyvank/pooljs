@@ -105,6 +105,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			except KeyError:
 				pass
 		del self.job_ids[:]
+		return ids
 		
 	async def onClose(self, wasClean, code, reason):
 		ids = self.cleanup()
