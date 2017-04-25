@@ -88,7 +88,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			self.job_ids.remove(job_id)
 
 	# Returns Job ids to revive
-	def cleanup(self):
+	async def cleanup(self):
 		if self in processor_websockets:
 			processor_websockets.remove(self)
 		for job_id in self.job_ids:
