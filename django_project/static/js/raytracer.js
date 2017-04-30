@@ -19,6 +19,12 @@
 			workerPool.push(worker);
 		}
 	}
+	function killPool() {
+		for(var i=0;i<workerPool.length;i++){
+			workerPool[i].terminate();
+		}
+		workerPool = [];
+	}
 	var counter = 0;
 	function balance(job,callback) {
 		var w = workerPool[counter % workerPool.length];
@@ -135,6 +141,7 @@
 			}
 			return [widthSize*x,heightSize*y,data];
 		}
+		killPool();
 		if(onpool){
 			ctx.pool.for(0,partsWidth*partsHeight,f,[width,height,partsWidth,partsHeight]).result(function(result,error){
 				if(!error)
