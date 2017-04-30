@@ -1,5 +1,5 @@
 (function(ctx){
-	
+
 	function createWorker(foo) {
 		var str = foo.toString().match(/^\s*function\s*\(\s*\)\s*\{(([\s\S](?!\}$))*[\s\S])/)[1];
 		return new Worker(window.URL.createObjectURL(new Blob([str],{type:'text/javascript'})));
@@ -84,11 +84,11 @@
 				var norm = normalize(sub(pos,this.position));
 				return [t,pos,norm,[1,1,1]];
 			}
-			var objs = [{normal:[0,1,0],cellSize:25,intercept:50,intersect:planeIntersection,diffuse:[1,1,1],reflection:0.2,ambient:[0.1,0.1,0.1]},
-					{position:[0,0,200],radius:50,intersect:sphereIntersection,diffuse:[0,0,1],reflection:0.2,ambient:[0.1,0.1,0.1]},
-					{position:[-70,-20,120],radius:30,intersect:sphereIntersection,diffuse:[0,1,0],reflection:0.2,ambient:[0.1,0.1,0.1]},
-					{position:[50,-30,100],radius:20,intersect:sphereIntersection,diffuse:[1,0,0],reflection:0.2,ambient:[0.1,0.1,0.1]}];
-			var lights = [[[500,500,-500],[1,1,1]]];
+			var objs = [{normal:[0,1,0],cellSize:25,intercept:50,intersect:planeIntersection,emittance:[0,0,0],reflectance:0.1},
+					{position:[0,0,200],radius:50,intersect:sphereIntersection,emittance:[0,0,0],reflectance:0.5},
+					{position:[-70,-20,120],radius:30,intersect:sphereIntersection,emittance:[0,0,0],reflectance:0.5},
+					{position:[50,-30,100],radius:20,intersect:sphereIntersection,emittance:[0,0,0],reflectance:0.5},
+					{position:[500,500,500],radius:280,intersect:sphereIntersection,emittance:[10,10,10],reflectance:0}];
 			function nearestObjIsect(ray){
 				var nearestDist = null;
 				var nearestIsect = null;
@@ -108,8 +108,13 @@
 				else
 					return null;
 			}
+			function randomHemisphereVectorByNormal(norm){
+				var randVec = [Math.random(),Math.random(),Math.random()];
+				if(dot(randVec,norm)<0)randVec=neg(randVec);
+				return normalize(randVec);
+			}
 			function traceRay(ray,depth=0){
-				if(depth>4)
+				if(depth>1)
 					return [0,0,0];
 
 				var near = nearestObjIsect(ray);
@@ -117,25 +122,20 @@
 				if(!near)
 					return null;
 				else{
-					var light = near[0].ambient;
+
 					var rpos = sum(near[1][1],mul(near[1][2],0.0000001));
-					for(var i=0;i<lights.length;i++){
-						var lr = normalize(sub(lights[i][0],near[1][1]));
-						if(!nearestObjIsect([rpos,lr])){
-							var d = dot(lr,near[1][2]);
-							if(d>0)
-								light = sum(light,mul(lights[i][1],d));
-						}
+					var NUM_SAMPLES=20;
+					var refl = [0,0,0];
+					for(var i=0;i<NUM_SAMPLES;i++){
+						var hem = randomHemisphereVectorByNormal(near[1][2]);
+						var cosTheta = dot(hem,near[1][2]);
+						var BRDF = 2 * cosTheta * near[0].reflectance;
+						var reflected = traceRay([rpos,hem],depth+1);
+						if(reflected)
+							refl = sum(refl,mul(reflected,BRDF));
 					}
-					var col = ewmul(ewmul(near[1][3],near[0].diffuse),light);
-
-					var reflCol=traceRay([rpos,near[1][2]],depth+1);
-					var refl=[0,0,0];
-					if(reflCol)
-						 refl = mul(reflCol,near[0].reflection);
-
-					col = sum(col,refl);
-					return col;
+					refl = mul(refl,1/NUM_SAMPLES);
+					return sum(near[0].emittance,refl);
 				}
 			}
 			function pixelAt(x,y){
