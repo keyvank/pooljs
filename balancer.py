@@ -24,7 +24,7 @@ PING_INTERVAL = 5 # Seconds
 
 MAX_FAILURES = 3
 
-IP_JOB_COUNT_LIMIT = 200
+IP_JOB_COUNT_LIMIT = 2500
 IP_DURATION_LIMIT = 10000 # Milliseconds
 
 SSL_CERT_FILE = '/etc/letsencrypt/live/pooljs.ir/cert.pem'
