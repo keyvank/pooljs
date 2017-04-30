@@ -24,8 +24,8 @@ PING_INTERVAL = 5 # Seconds
 
 MAX_FAILURES = 3
 
-IP_JOB_COUNT_LIMIT = 2500
-IP_DURATION_LIMIT = 10000 # Milliseconds
+IP_JOB_COUNT_LIMIT = 1000
+IP_DURATION_LIMIT = 30000 # Milliseconds
 
 SSL_CERT_FILE = '/etc/letsencrypt/live/pooljs.ir/cert.pem'
 SSL_KEY_FILE = '/etc/letsencrypt/live/pooljs.ir/privkey.pem'
@@ -104,7 +104,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			except KeyError:
 				pass
 		del self.job_ids[:]
-		
+
 	async def onClose(self, wasClean, code, reason):
 		await self.cleanup()
 		lg.debug("Processor closed. Cleanly?: {}. Code: {}, Reason: {}".format(wasClean, code, reason))
