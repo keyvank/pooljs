@@ -80,7 +80,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		if not self.last_ping_time or (self.last_pong_time and self.last_ping_time < self.last_pong_time):
 			self.last_ping_time = now()
 		self.sendMessage(json.dumps(message).encode('utf-8'),False)
-		if job_id: # Do not add Idle Jobs to the list
+		if job_id is not None: # Do not add Idle Jobs to the list
 			self.job_ids.append(job_id)
 
 	async def onOpen(self):
