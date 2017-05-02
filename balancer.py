@@ -22,6 +22,12 @@ CLIENTS_SERVER_PORT = 21212
 MAX_PONG_WAIT_TIME = 3000 # Milliseconds
 PING_INTERVAL = 5 # Seconds
 
+IDLE_ID = None
+IDLE_SCRIPT = "function(){return 123;}"
+IDLE_ARGS = []
+IDLE_RESULT = 123
+IDLE_INTERVAL = 30 # Seconds
+
 MAX_FAILURES = 3
 
 IP_JOB_COUNT_LIMIT = 1000
@@ -75,17 +81,21 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		processor_exists.release()
 
 	async def onMessage(self, payload, isBinary):
-		self.last_pong_time = now()
 		msg = json.loads(payload.decode('utf8'))
 		job_id = msg["id"]
-		try:
-			jobs[job_id].websocket.result_available(job_id,msg["result"],False)
-			jobs[job_id].websocket.job_ids.remove(job_id)
-			del jobs[job_id]
-		except KeyError:
-			pass
-		if job_id in self.job_ids:
-			self.job_ids.remove(job_id)
+		if job_id:
+			self.last_pong_time = now()
+			try:
+				jobs[job_id].websocket.result_available(job_id,msg["result"],False)
+				jobs[job_id].websocket.job_ids.remove(job_id)
+				del jobs[job_id]
+			except KeyError:
+				pass
+			if job_id in self.job_ids:
+				self.job_ids.remove(job_id)
+		else: # This is an Idle Job!
+			if msg["result"] == IDLE_RESULT:
+				self.last_pong_time = now()
 
 	# Returns Job ids to revive
 	async def cleanup(self):
@@ -274,6 +284,18 @@ async def watcher():
 			ws.sendClose()
 		await asyncio.sleep(PING_INTERVAL)
 
+# Generating idle processes
+async def idle():
+	while True:
+		for ws in processor_websockets:
+			if not ws.last_ping_time or (ws.last_pong_time and ws.last_ping_time < ws.last_pong_time):
+				ws.last_ping_time = now()
+			message = { "id": IDLE_ID,
+						"code": IDLE_SCRIPT,
+						"args": IDLE_ARGS }
+			ws.sendMessage(json.dumps(message).encode('utf-8'),False)
+		await asyncio.sleep(IDLE_INTERVAL)
+
 if __name__ == '__main__':
 	ssl_ctx = None
 	if os.path.isfile(SSL_CERT_FILE) and os.path.isfile(SSL_KEY_FILE):
@@ -291,7 +313,7 @@ if __name__ == '__main__':
 	processorFactory.protocol = ProcessorProtocol
 	processorCoro = loop.create_server(processorFactory, PROCESSORS_SERVER_IP, PROCESSORS_SERVER_PORT, ssl=ssl_ctx)
 
-	all_tasks = asyncio.gather(clientCoro,processorCoro,balancer(),watcher())
+	all_tasks = asyncio.gather(clientCoro,processorCoro,balancer(),watcher(),idle())
 
 	try:
 		server = loop.run_until_complete(all_tasks)
