@@ -73,6 +73,16 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		self.last_ping_time = None
 		self.last_pong_time = None
 
+	def send_job(self,job_id,code,args):
+		message = { "id": job_id,
+					"code": code,
+					"args": args }
+		if not self.last_ping_time or (self.last_pong_time and self.last_ping_time < self.last_pong_time):
+			self.last_ping_time = now()
+		self.sendMessage(json.dumps(message).encode('utf-8'),False)
+		if job_id: # Do not add Idle Jobs to the list
+			self.job_ids.append(job_id)
+
 	async def onOpen(self):
 		# Notify the balancer a new Processor has been added
 		await processor_exists.acquire()
@@ -257,13 +267,7 @@ async def balancer():
 		websocket = random.sample(processor_websockets, 1)[0]
 		if job_id in jobs:
 			try:
-				message = { "id": job_id,
-							"code": jobs[job_id].code,
-							"args": jobs[job_id].args }
-				if not websocket.last_ping_time or (websocket.last_pong_time and websocket.last_ping_time < websocket.last_pong_time):
-					websocket.last_ping_time = now()
-				websocket.sendMessage(json.dumps(message).encode('utf-8'),False)
-				websocket.job_ids.append(job_id)
+				websocket.send_job(job_id, jobs[job_id].code, jobs[job_id].args)
 			except:
 				lg.debug("An exception occurred while sending a Job.")
 				job_id_queue.put(job_id) # Revive the job
@@ -288,12 +292,10 @@ async def watcher():
 async def idle():
 	while True:
 		for ws in processor_websockets:
-			if not ws.last_ping_time or (ws.last_pong_time and ws.last_ping_time < ws.last_pong_time):
-				ws.last_ping_time = now()
-			message = { "id": IDLE_ID,
-						"code": IDLE_SCRIPT,
-						"args": IDLE_ARGS }
-			ws.sendMessage(json.dumps(message).encode('utf-8'),False)
+			try:
+				ws.send_job(IDLE_ID, IDLE_SCRIPT, IDLE_ARGS)
+			except:
+				pass # No need to revive Idle Jobs!
 		await asyncio.sleep(IDLE_INTERVAL)
 
 if __name__ == '__main__':
