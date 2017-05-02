@@ -93,7 +93,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 	async def onMessage(self, payload, isBinary):
 		msg = json.loads(payload.decode('utf8'))
 		job_id = msg["id"]
-		if job_id:
+		if job_id is not None:
 			self.last_pong_time = now()
 			try:
 				jobs[job_id].websocket.result_available(job_id,msg["result"],False)
