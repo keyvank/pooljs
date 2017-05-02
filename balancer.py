@@ -22,6 +22,9 @@ CLIENTS_SERVER_PORT = 21212
 MAX_PONG_WAIT_TIME = 3000 # Milliseconds
 PING_INTERVAL = 5 # Seconds
 
+MAX_JOB_PER_PROCESSOR = 10
+MAX_JOB_REACHED_REST_TIME = 1 # Seconds
+
 IDLE_ID = None
 IDLE_SCRIPT = "function(){return 123;}"
 IDLE_ARGS = []
@@ -265,12 +268,16 @@ async def balancer():
 		processor_exists.release()
 
 		websocket = random.sample(processor_websockets, 1)[0]
-		if job_id in jobs:
-			try:
-				websocket.send_job(job_id, jobs[job_id].code, jobs[job_id].args)
-			except:
-				lg.debug("An exception occurred while sending a Job.")
-				job_id_queue.put(job_id) # Revive the job
+		if len(websocket.job_ids) < MAX_JOB_PER_PROCESSOR:
+			if job_id in jobs:
+				try:
+					websocket.send_job(job_id, jobs[job_id].code, jobs[job_id].args)
+				except:
+					lg.debug("An exception occurred while sending a Job.")
+					await job_id_queue.put(job_id) # Revive the job
+		else:
+			await job_id_queue.put(job_id) # Revive the job
+			await asyncio.sleep(MAX_JOB_REACHED_REST_TIME) # It seems server is busy, sleep for a second!
 
 # Close not-responding sockets and revive Jobs
 async def watcher():
