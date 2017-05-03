@@ -124,7 +124,7 @@
                     }
                     c[0]+=clamp(r.x)*0.25; c[1]+=clamp(r.y)*0.25; c[2]+=clamp(r.z)*0.25;
                 }
-						return [c[0]*255,c[1]*255,c[2]*255];
+						return [toInt(c[0]),toInt(c[1]),toInt(c[2])];
         }
 			var x = ind%partsWidth,y = Math.floor(ind/partsWidth);
 			var data = [];
