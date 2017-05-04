@@ -241,8 +241,8 @@ class ClientProtocol(WebSocketServerProtocol):
 						break
 
 			elif msg["type"] == "forEach":
-				for args in msg["argsList"]:
-					if await self.new_job(msg["code"],args + msg["extraArgs"],msg["id"]):
+				for arg in msg["argsList"]:
+					if await self.new_job(msg["code"],[arg] + msg["extraArgs"],msg["id"]):
 						break
 
 
