@@ -115,6 +115,9 @@
 			info: function() {
 				var message = { type: "info" };
 				sock.send(JSON.stringify(message));
+			},
+			resetLocal: function() {
+				resetPool();
 			}
 		}
 
