@@ -1,6 +1,6 @@
 (function(ctx){
 
-	ctx.pool.rayTracer = function(width,height,partsWidth,partsHeight,callback,onpool=true){
+	ctx.pool.smallpt = function(width,height,partsWidth,partsHeight,callback,onpool=true){
 		function f(ind,width,height,partsWidth,partsHeight){
         /*  SmallPT - JavaScript version of 99 line Path Tracer - http://www.kevinbeason.com/smallpt/
             Author: Ivan Kuckir, http://blog.ivank.net    */

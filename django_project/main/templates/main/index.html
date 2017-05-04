@@ -4,7 +4,7 @@
 
 {% block scripts %}
 	{{ block.super }}
-	<script src="{% static 'js/raytracer.js' %}"></script>
+	<script src="{% static 'js/smallpt.js' %}"></script>
 	<script>
 		$(document).ready(function(){
 			pool.onlimit = function(remaining){
@@ -33,11 +33,11 @@
 			$("#rayTracer-btn").click(function(){
 				ctx.clearRect(0, 0, width, height);
 				pool.setBufferSize(1);
-				pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion,true);
+				pool.smallpt(width,height,partsWidth,partsHeight,drawRegion,true);
 			});
 			$("#rayTracer-btn-single").click(function(){
 				ctx.clearRect(0, 0, width, height);
-				pool.rayTracer(width,height,partsWidth,partsHeight,drawRegion,false);
+				pool.smallpt(width,height,partsWidth,partsHeight,drawRegion,false);
 			});
 
 			$("#custom-code-btn").click(function(){
