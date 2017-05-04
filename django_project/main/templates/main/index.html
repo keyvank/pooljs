@@ -11,7 +11,7 @@
 				alert("You have reached your limit! " + (remaining/1000) + " seconds reamining...");
 			}
 			var ctx = document.getElementById("frame").getContext("2d");
-			var partsWidth = 45, partsHeight = 45;
+			var partsWidth = 30, partsHeight = 30;
 			var width = 360, height = 270;
 			function drawRegion(x,y,data){
 				var h=data.length;
@@ -32,7 +32,7 @@
 
 			$("#rayTracer-btn").click(function(){
 				ctx.clearRect(0, 0, width, height);
-				pool.setBufferSize(5);
+				pool.setBufferSize(1);
 				pool.resetLocal();
 				pool.smallpt(width,height,partsWidth,partsHeight,drawRegion,true);
 			});
@@ -44,7 +44,6 @@
 
 			$("#custom-code-btn").click(function(){
 				$('#custom-code-result').empty();
-				pool.setBufferSize(1);
 				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+editor.getValue();
 				eval(code);
 			});
