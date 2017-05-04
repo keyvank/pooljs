@@ -1,38 +1,5 @@
 (function(ctx){
 
-	function createWorker(foo) {
-		var str = foo.toString().match(/^\s*function\s*\(\s*\)\s*\{(([\s\S](?!\}$))*[\s\S])/)[1];
-		return new Worker(window.URL.createObjectURL(new Blob([str],{type:'text/javascript'})));
-	}
-	var workerPool = [];
-	function fillPool() {
-		while(workerPool.length < navigator.hardwareConcurrency) {
-			var worker = createWorker(function(){
-				var self = this;
-				this.addEventListener("message", function(event) {
-					var job = event.data;
-					var src = "var fn = " + job.code;
-					eval(src);
-					self.postMessage(fn.apply(this, job.args));
-				}, false);
-			});
-			workerPool.push(worker);
-		}
-	}
-	function killPool() {
-		for(var i=0;i<workerPool.length;i++){
-			workerPool[i].terminate();
-		}
-		workerPool = [];
-	}
-	var counter = 0;
-	function balance(job,callback) {
-		var w = workerPool[counter % workerPool.length];
-		w.onmessage = function(event){callback(event.data);};
-		w.postMessage(job);
-		counter++;
-	}
-
 	ctx.pool.rayTracer = function(width,height,partsWidth,partsHeight,callback,onpool=true){
 		function f(ind,width,height,partsWidth,partsHeight){
         /*  SmallPT - JavaScript version of 99 line Path Tracer - http://www.kevinbeason.com/smallpt/
@@ -139,19 +106,9 @@
 			}
 			return [widthSize*x,heightSize*y,data];
 		}
-		killPool();
-		if(onpool){
-			ctx.pool.for(0,partsWidth*partsHeight,f,[width,height,partsWidth,partsHeight]).result(function(result,error){
-				if(!error)
-					callback(result[0],result[1],result[2]);
-			});
-		}else{
-			fillPool();
-			for(var i=0;i < partsWidth*partsHeight; i++){
-				balance({code:f.toString(),args:[i,width,height,partsWidth,partsHeight]},function(result){
-					callback(result[0],result[1],result[2]);
-				});
-			}
-		}
+		ctx.pool.for(0,partsWidth*partsHeight,f,[width,height,partsWidth,partsHeight],!onpool).result(function(result,error){
+			if(!error)
+				callback(result[0],result[1],result[2]);
+		});
 	}
 }(this));
