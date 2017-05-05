@@ -30,7 +30,7 @@
 							eval(src);
 							lastProcessId = job.process_id;
 						}
-						var job_result = { "id": job.id, "result": fn.apply(this, job.args) };
+						var job_result = { "id": job.id, "result": fn.apply(this, job.args), "error": false };
 						self.postMessage(job_result);
 					}, false);
 				});
@@ -124,7 +124,7 @@
 						w.terminate();
 						workerPool.splice(i,1);
 						if(sock) {
-							var job_result = { "id": w.job.id, "result": null };
+							var job_result = { "id": w.job.id, "result": null, "error": true };
 							// Send null as the result of Jobs taking too long to respond
 							sock.send(JSON.stringify(job_result));
 						}

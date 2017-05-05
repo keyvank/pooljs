@@ -113,9 +113,19 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		if job_id is not None:
 			self.last_pong_time = now()
 			try:
-				jobs[job_id].websocket.result_available(job_id,msg["result"],False)
-				jobs[job_id].websocket.job_ids.remove(job_id)
-				del jobs[job_id]
+				if not msg["error"]:
+					jobs[job_id].websocket.result_available(job_id,msg["result"],False)
+					jobs[job_id].websocket.job_ids.remove(job_id)
+					del jobs[job_id]
+				else:
+					jobs[job_id].fails += 1
+					# Delete the Job from the list when it has multiple failures
+					if jobs[job_id].fails > MAX_FAILURES:
+						# Send and error to the Client
+						jobs[job_id].websocket.result_available(job_id,None,True)
+						del jobs[job_id]
+					else:
+						await job_id_queue.put(job_id)
 			except KeyError:
 				pass
 			if job_id in self.job_ids:
