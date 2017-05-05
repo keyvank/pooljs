@@ -21,10 +21,15 @@
 			while(workerPool.length < navigator.hardwareConcurrency) {
 				var worker = createWorker(function(){
 					var self = this;
+					var lastProcessId = null;
+					var fn;
 					this.addEventListener("message", function(event) {
 						var job = event.data;
-						var src = "var fn = " + job.code;
-						eval(src);
+						if(job.process_id != lastProcessId) {
+							var src = "fn = " + job.code;
+							eval(src);
+							lastProcessId = job.process_id;
+						}
 						var job_result = { "id": job.id, "result": fn.apply(this, job.args) };
 						self.postMessage(job_result);
 					}, false);

@@ -26,10 +26,13 @@ MAX_JOB_PER_PROCESSOR = 8
 MAX_JOB_REACHED_REST_TIME = 0.1 # Seconds
 
 IDLE_ID = None
+IDLE_PROCESS_ID = None
 IDLE_SCRIPT = "function(){return 123;}"
 IDLE_ARGS = []
 IDLE_RESULT = 123
 IDLE_INTERVAL = 30 # Seconds
+
+MAXIMUM_JOB_CODE_REPEAT_COUNT = 16
 
 MAX_FAILURES = 3
 
@@ -41,7 +44,8 @@ SSL_KEY_FILE = '/etc/letsencrypt/live/pooljs.ir/privkey.pem'
 
 class Job:
 
-	def __init__(self,code,websocket,args,identity):
+	def __init__(self,code,websocket,args,identity,process_id):
+		self.process_id = process_id
 		self.code = code
 		self.websocket = websocket # Job owner websocket
 		self.args = args
@@ -59,6 +63,7 @@ class IpLimit:
 ip_limit = {} # Mapping IP as strings to IpLimits
 job_id_queue = asyncio.Queue() # Queue of requested Job ids
 job_id_counter = 0 # A counter for generating Job ids
+process_id_counter = 0 # A counter for generating Process ids
 jobs = {} # Mapping Job ids as integers to Jobs
 processor_websockets = set()
 client_websockets = set()
@@ -75,11 +80,20 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		self.job_ids = []
 		self.last_ping_time = None
 		self.last_pong_time = None
+		self.last_process_id = None
+		self.last_process_id_repeat_count = 0
 
-	def send_job(self,job_id,code,args):
+	def send_job(self,job_id,code,args,process_id):
+		if process_id == self.last_process_id:
+			self.last_process_id_repeat_count += 1
+		else:
+			self.last_process_id = process_id
+			self.last_process_id_repeat_count = 1
 		message = { "id": job_id,
-					"code": code,
+					"process_id": process_id,
 					"args": args }
+		if self.last_process_id_repeat_count <= MAXIMUM_JOB_CODE_REPEAT_COUNT:
+			message["code"] = code
 		if not self.last_ping_time or (self.last_pong_time and self.last_ping_time < self.last_pong_time):
 			self.last_ping_time = now()
 		self.sendMessage(json.dumps(message).encode('utf-8'),False)
@@ -195,10 +209,11 @@ class ClientProtocol(WebSocketServerProtocol):
 		except:
 			pass # None of our business!
 
-	async def new_job(self,code,args,identity):
+	async def new_job(self,code,args,identity,process_id):
 		global job_id_counter
+
 		if self.ip_limit.count < self.ip_limit.count_limit:
-			jobs[job_id_counter] = Job(code,self,args,identity)
+			jobs[job_id_counter] = Job(code,self,args,identity,process_id)
 			await job_id_queue.put(job_id_counter)
 			self.job_ids.append(job_id_counter)
 			job_id_counter += 1
@@ -210,6 +225,7 @@ class ClientProtocol(WebSocketServerProtocol):
 			return True
 
 	async def onMessage(self, payload, isBinary):
+		global process_id_counter
 		msg = json.loads(payload.decode('utf8'))
 
 		if msg["type"] == "flush":
@@ -233,17 +249,20 @@ class ClientProtocol(WebSocketServerProtocol):
 					return
 
 			if msg["type"] == "run":
-				await self.new_job(msg["code"],msg["args"],msg["id"])
+				await self.new_job(msg["code"],msg["args"],msg["id"],process_id_counter)
+				process_id_counter += 1
 
 			elif msg["type"] == "for":
 				for i in range(msg["start"],msg["end"]):
-					if await self.new_job(msg["code"],[i] + msg["extraArgs"],msg["id"]):
+					if await self.new_job(msg["code"],[i] + msg["extraArgs"],msg["id"],process_id_counter):
 						break
+				process_id_counter += 1
 
 			elif msg["type"] == "forEach":
 				for arg in msg["argsList"]:
-					if await self.new_job(msg["code"],[arg] + msg["extraArgs"],msg["id"]):
+					if await self.new_job(msg["code"],[arg] + msg["extraArgs"],msg["id"],process_id_counter):
 						break
+				process_id_counter += 1
 
 
 	async def onClose(self, wasClean, code, reason):
@@ -271,7 +290,7 @@ async def balancer():
 		if len(websocket.job_ids) < MAX_JOB_PER_PROCESSOR:
 			if job_id in jobs:
 				try:
-					websocket.send_job(job_id, jobs[job_id].code, jobs[job_id].args)
+					websocket.send_job(job_id, jobs[job_id].code, jobs[job_id].args, jobs[job_id].process_id)
 				except:
 					lg.debug("An exception occurred while sending a Job.")
 					await job_id_queue.put(job_id) # Revive the job
@@ -300,7 +319,7 @@ async def idle():
 	while True:
 		for ws in processor_websockets:
 			try:
-				ws.send_job(IDLE_ID, IDLE_SCRIPT, IDLE_ARGS)
+				ws.send_job(IDLE_ID, IDLE_SCRIPT, IDLE_ARGS, IDLE_PROCESS_ID)
 			except:
 				pass # No need to revive Idle Jobs!
 		await asyncio.sleep(IDLE_INTERVAL)
