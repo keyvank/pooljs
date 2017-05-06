@@ -142,7 +142,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 					jobs[job_id].process.job_ids.remove(job_id)
 					del jobs[job_id]
 				else:
-					await job_fail(job_id)
+					await self.job_fail(job_id)
 			except KeyError:
 				pass
 			if job_id in self.job_ids:
@@ -157,7 +157,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			processor_websockets.remove(self)
 		for job_id in self.job_ids:
 			try:
-				await job_fail(job_id)
+				await self.job_fail(job_id)
 			except KeyError:
 				pass
 		del self.job_ids[:]
