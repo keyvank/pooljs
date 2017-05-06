@@ -115,7 +115,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		processor_exists.notify_all()
 		processor_exists.release()
 
-	async def job_fail(job_id):
+	async def job_fail(self,job_id):
 		jobs[job_id].fails += 1
 		jobs[job_id].process.fails += 1
 		# Delete the Job from the list when it has multiple failures
