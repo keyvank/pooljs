@@ -34,7 +34,8 @@ IDLE_INTERVAL = 30 # Seconds
 
 MAXIMUM_JOB_CODE_REPEAT_COUNT = 32
 
-MAX_FAILURES = 8
+MAX_FAILURES = 4
+MAX_PROCESS_FAILURES = MAX_FAILURES * 5
 
 IP_JOB_COUNT_LIMIT = 1000
 IP_DURATION_LIMIT = 30000 # Milliseconds
@@ -42,14 +43,21 @@ IP_DURATION_LIMIT = 30000 # Milliseconds
 SSL_CERT_FILE = '/etc/letsencrypt/live/pooljs.ir/cert.pem'
 SSL_KEY_FILE = '/etc/letsencrypt/live/pooljs.ir/privkey.pem'
 
-class Job:
+class Process:
 
-	def __init__(self,code,websocket,args,identity,process_id):
-		self.process_id = process_id
+	def __init__(self,identity,code,websocket):
+		self.identity = identity
 		self.code = code
 		self.websocket = websocket # Job owner websocket
-		self.args = args
+		self.job_ids = []
+		self.fails = 0
+
+class Job:
+
+	def __init__(self,identity,process,args):
 		self.identity = identity # Every Job has an identity in the client side
+		self.process = process
+		self.args = args
 		self.fails = 0 # Jobs will be deleted from the list when having multiple failures (MAX_FAILURES)
 
 class IpLimit:
@@ -107,6 +115,21 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		processor_exists.notify_all()
 		processor_exists.release()
 
+	async def job_fail(job_id):
+		jobs[job_id].fails += 1
+		jobs[job_id].process.fails += 1
+		# Delete the Job from the list when it has multiple failures
+		if jobs[job_id].fails > MAX_FAILURES:
+			# Send and error to the Client
+			jobs[job_id].process.websocket.result_available(job_id,None,True)
+			jobs[job_id].process.job_ids.remove(job_id)
+			del jobs[job_id]
+		else:
+			await job_id_queue.put(job_id)
+		if jobs[job_id].process.fails > MAX_PROCESS_FAILURES:
+			for jid in jobs[job_id].process.job_ids:
+				del jobs[jid]
+
 	async def onMessage(self, payload, isBinary):
 		msg = json.loads(payload.decode('utf8'))
 		job_id = msg["id"]
@@ -114,18 +137,12 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			self.last_pong_time = now()
 			try:
 				if not msg["error"]:
-					jobs[job_id].websocket.result_available(job_id,msg["result"],False)
-					jobs[job_id].websocket.job_ids.remove(job_id)
+					jobs[job_id].process.websocket.result_available(job_id,msg["result"],False)
+					jobs[job_id].process.websocket.job_ids.remove(job_id)
+					jobs[job_id].process.job_ids.remove(job_id)
 					del jobs[job_id]
 				else:
-					jobs[job_id].fails += 1
-					# Delete the Job from the list when it has multiple failures
-					if jobs[job_id].fails > MAX_FAILURES:
-						# Send and error to the Client
-						jobs[job_id].websocket.result_available(job_id,None,True)
-						del jobs[job_id]
-					else:
-						await job_id_queue.put(job_id)
+					await job_fail(job_id)
 			except KeyError:
 				pass
 			if job_id in self.job_ids:
@@ -140,14 +157,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			processor_websockets.remove(self)
 		for job_id in self.job_ids:
 			try:
-				jobs[job_id].fails += 1
-				# Delete the Job from the list when it has multiple failures
-				if jobs[job_id].fails > MAX_FAILURES:
-					# Send and error to the Client
-					jobs[job_id].websocket.result_available(job_id,None,True)
-					del jobs[job_id]
-				else:
-					await job_id_queue.put(job_id)
+				await job_fail(job_id)
 			except KeyError:
 				pass
 		del self.job_ids[:]
@@ -219,11 +229,12 @@ class ClientProtocol(WebSocketServerProtocol):
 		except:
 			pass # None of our business!
 
-	async def new_job(self,code,args,identity,process_id):
+	async def new_job(self,identity,process,args):
 		global job_id_counter
 
 		if self.ip_limit.count < self.ip_limit.count_limit:
-			jobs[job_id_counter] = Job(code,self,args,identity,process_id)
+			jobs[job_id_counter] = Job(identity,process,args)
+			process.job_ids.append(job_id_counter)
 			await job_id_queue.put(job_id_counter)
 			self.job_ids.append(job_id_counter)
 			job_id_counter += 1
@@ -259,18 +270,21 @@ class ClientProtocol(WebSocketServerProtocol):
 					return
 
 			if msg["type"] == "run":
-				await self.new_job(msg["code"],msg["args"],msg["id"],process_id_counter)
+				proc = Process(process_id_counter,msg["code"],self)
+				await self.new_job(msg["id"],proc,msg["args"])
 				process_id_counter += 1
 
 			elif msg["type"] == "for":
+				proc = Process(process_id_counter,msg["code"],self)
 				for i in range(msg["start"],msg["end"]):
-					if await self.new_job(msg["code"],[i] + msg["extraArgs"],msg["id"],process_id_counter):
+					if await self.new_job(msg["id"],proc,[i] + msg["extraArgs"]):
 						break
 				process_id_counter += 1
 
 			elif msg["type"] == "forEach":
+				proc = Process(process_id_counter,msg["code"],self)
 				for arg in msg["argsList"]:
-					if await self.new_job(msg["code"],[arg] + msg["extraArgs"],msg["id"],process_id_counter):
+					if await self.new_job(msg["id"],proc,[arg] + msg["extraArgs"]):
 						break
 				process_id_counter += 1
 
@@ -300,7 +314,7 @@ async def balancer():
 		if len(websocket.job_ids) < MAX_JOB_PER_PROCESSOR:
 			if job_id in jobs:
 				try:
-					websocket.send_job(job_id, jobs[job_id].code, jobs[job_id].args, jobs[job_id].process_id)
+					websocket.send_job(job_id, jobs[job_id].process.code, jobs[job_id].args, jobs[job_id].process.identity)
 				except:
 					lg.debug("An exception occurred while sending a Job.")
 					await job_id_queue.put(job_id) # Revive the job
