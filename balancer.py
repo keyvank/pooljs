@@ -109,11 +109,8 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			self.subprocess_ids.append(subprocess_id)
 
 	async def onOpen(self):
-		# Notify the balancer a new Processor has been added
-		await processor_exists.acquire()
-		processor_websockets.add(self)
-		processor_exists.notify_all()
-		processor_exists.release()
+		# Check if Processor works with and Idle Process
+		self.send_subprocess(IDLE_ID,IDLE_SCRIPT,IDLE_ARGS,IDLE_PROCESS_ID)
 
 	async def subprocess_fail(self,subprocess_id):
 		subprocesses[subprocess_id].fails += 1
@@ -150,6 +147,12 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		else: # This is an Idle SubProcess!
 			if msg["result"] == IDLE_RESULT:
 				self.last_pong_time = now()
+			if self not in processor_websockets: # Processor works correctly so add it to the list!
+				# Notify the balancer a new Processor has been added
+				await processor_exists.acquire()
+				processor_websockets.add(self)
+				processor_exists.notify_all()
+				processor_exists.release()
 
 	# Returns SubProcess ids to revive
 	async def cleanup(self):
