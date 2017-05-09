@@ -12,10 +12,10 @@
 					var worker = createWorker(function(){
 						var self = this;
 						this.addEventListener("message", function(event) {
-							var job = event.data;
-							var src = "var fn = " + job.code;
+							var subprocess = event.data;
+							var src = "var fn = " + subprocess.code;
 							eval(src);
-							self.postMessage(fn.apply(this, job.args));
+							self.postMessage(fn.apply(this, subprocess.args));
 						}, false);
 					});
 					workerPool.push(worker);
@@ -29,10 +29,10 @@
 				fillPool();
 			}
 			var local_counter = 0;
-			function balance(job,callback) {
+			function balance(subprocess,callback) {
 				var w = workerPool[local_counter % workerPool.length];
 				w.onmessage = function(event){callback(event.data,false);};
-				w.postMessage(job);
+				w.postMessage(subprocess);
 				local_counter++;
 			}
 		}
@@ -41,14 +41,14 @@
 		var WEBSOCKET_PORT = 21212;
 		var WEBSOCKET_ADDRESS = "wss://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
 
-		var jobCounter = 0; /* A counter as a generator for Job ids */
+		var subprocessCounter = 0; /* A counter as a generator for SubProcess ids */
 		var sock = new WebSocket(WEBSOCKET_ADDRESS);
 		var listeners = [];
 
 		context.pool = {
 			run: function(func, args = [], local = false) {
 				if(!local) {
-					var id = jobCounter++;
+					var id = subprocessCounter++;
 					var message = { type: "run",
 													args: args,
 													code: func.toString(),
@@ -63,7 +63,7 @@
 			},
 			for: function(start, end, func, extraArgs = [], local = false) {
 				if(!local) {
-					var id = jobCounter++;
+					var id = subprocessCounter++;
 					var message = { type: "for",
 													start: start,
 													end: end,
@@ -84,7 +84,7 @@
 			},
 			forEach: function(argsList, func, extraArgs = [], local = false) {
 				if(!local) {
-					var id = jobCounter++;
+					var id = subprocessCounter++;
 					var message = { type:"forEach",
 													argsList:argsList,
 													code:func.toString(),
@@ -142,7 +142,7 @@
 
 			else if(msg.type == "info") {
 				if("oninfo" in context.pool) {
-					context.pool.oninfo(msg.processorsCount, msg.jobsCount);
+					context.pool.oninfo(msg.processorsCount, msg.subprocessesCount);
 				}
 			}
 

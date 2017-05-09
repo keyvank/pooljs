@@ -22,8 +22,8 @@ CLIENTS_SERVER_PORT = 21212
 MAX_PONG_WAIT_TIME = 5000 # Milliseconds
 PING_INTERVAL = 5 # Seconds
 
-MAX_JOB_PER_PROCESSOR = 8
-MAX_JOB_REACHED_REST_TIME = 0.1 # Seconds
+MAX_SUBPROCESS_PER_PROCESSOR = 8
+MAX_SUBPROCESS_REACHED_REST_TIME = 0.1 # Seconds
 
 IDLE_ID = None
 IDLE_PROCESS_ID = None
@@ -32,12 +32,12 @@ IDLE_ARGS = []
 IDLE_RESULT = 123
 IDLE_INTERVAL = 30 # Seconds
 
-MAXIMUM_JOB_CODE_REPEAT_COUNT = 32
+MAXIMUM_SUBPROCESS_CODE_REPEAT_COUNT = 32
 
 MAX_FAILURES = 4
 MAX_PROCESS_FAILURES = MAX_FAILURES * 5
 
-IP_JOB_COUNT_LIMIT = 1000
+IP_SUBPROCESS_COUNT_LIMIT = 1000
 IP_DURATION_LIMIT = 30000 # Milliseconds
 
 SSL_CERT_FILE = '/etc/letsencrypt/live/pooljs.ir/cert.pem'
@@ -48,17 +48,17 @@ class Process:
 	def __init__(self,identity,code,websocket):
 		self.identity = identity
 		self.code = code
-		self.websocket = websocket # Job owner websocket
-		self.job_ids = []
+		self.websocket = websocket # SubProcess owner websocket
+		self.subprocess_ids = []
 		self.fails = 0
 
-class Job:
+class SubProcess:
 
 	def __init__(self,identity,process,args):
-		self.identity = identity # Every Job has an identity in the client side
+		self.identity = identity # Every SubProcess has an identity in the client side
 		self.process = process
 		self.args = args
-		self.fails = 0 # Jobs will be deleted from the list when having multiple failures (MAX_FAILURES)
+		self.fails = 0 # SubProcesses will be deleted from the list when having multiple failures (MAX_FAILURES)
 
 class IpLimit:
 
@@ -66,13 +66,13 @@ class IpLimit:
 		self.duration_limit = duration_limit
 		self.count_limit = count_limit
 		self.expiry_time = None
-		self.count = 0 # Count of Jobs ran by this IP since the last reset
+		self.count = 0 # Count of SubProcesses ran by this IP since the last reset
 
 ip_limit = {} # Mapping IP as strings to IpLimits
-job_id_queue = asyncio.Queue() # Queue of requested Job ids
-job_id_counter = 0 # A counter for generating Job ids
+subprocess_id_queue = asyncio.Queue() # Queue of requested SubProcess ids
+subprocess_id_counter = 0 # A counter for generating SubProcess ids
 process_id_counter = 0 # A counter for generating Process ids
-jobs = {} # Mapping Job ids as integers to Jobs
+subprocesses = {} # Mapping SubProcess ids as integers to SubProcesses
 processor_websockets = set()
 client_websockets = set()
 processor_exists = asyncio.Condition()
@@ -85,28 +85,28 @@ class ProcessorProtocol(WebSocketServerProtocol):
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.job_ids = []
+		self.subprocess_ids = []
 		self.last_ping_time = None
 		self.last_pong_time = None
 		self.last_process_id = None
 		self.last_process_id_repeat_count = 0
 
-	def send_job(self,job_id,code,args,process_id):
+	def send_subprocess(self,subprocess_id,code,args,process_id):
 		if process_id == self.last_process_id:
 			self.last_process_id_repeat_count += 1
 		else:
 			self.last_process_id = process_id
 			self.last_process_id_repeat_count = 1
-		message = { "id": job_id,
+		message = { "id": subprocess_id,
 					"process_id": process_id,
 					"args": args }
-		if self.last_process_id_repeat_count <= MAXIMUM_JOB_CODE_REPEAT_COUNT:
+		if self.last_process_id_repeat_count <= MAXIMUM_SUBPROCESS_CODE_REPEAT_COUNT:
 			message["code"] = code
 		if not self.last_ping_time or (self.last_pong_time and self.last_ping_time < self.last_pong_time):
 			self.last_ping_time = now()
 		self.sendMessage(json.dumps(message).encode('utf-8'),False)
-		if job_id is not None: # Do not add Idle Jobs to the list
-			self.job_ids.append(job_id)
+		if subprocess_id is not None: # Do not add Idle SubProcesses to the list
+			self.subprocess_ids.append(subprocess_id)
 
 	async def onOpen(self):
 		# Notify the balancer a new Processor has been added
@@ -115,52 +115,52 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		processor_exists.notify_all()
 		processor_exists.release()
 
-	async def job_fail(self,job_id):
-		jobs[job_id].fails += 1
-		jobs[job_id].process.fails += 1
-		# Delete the Job from the list when it has multiple failures
-		if jobs[job_id].fails > MAX_FAILURES:
+	async def subprocess_fail(self,subprocess_id):
+		subprocesses[subprocess_id].fails += 1
+		subprocesses[subprocess_id].process.fails += 1
+		# Delete the SubProcess from the list when it has multiple failures
+		if subprocesses[subprocess_id].fails > MAX_FAILURES:
 			# Send and error to the Client
-			jobs[job_id].process.websocket.result_available(job_id,None,True)
-			jobs[job_id].process.job_ids.remove(job_id)
-			del jobs[job_id]
+			subprocesses[subprocess_id].process.websocket.result_available(subprocess_id,None,True)
+			subprocesses[subprocess_id].process.subprocess_ids.remove(subprocess_id)
+			del subprocesses[subprocess_id]
 		else:
-			await job_id_queue.put(job_id)
-		if jobs[job_id].process.fails > MAX_PROCESS_FAILURES:
-			for jid in jobs[job_id].process.job_ids:
-				del jobs[jid]
+			await subprocess_id_queue.put(subprocess_id)
+		if subprocesses[subprocess_id].process.fails > MAX_PROCESS_FAILURES:
+			for jid in subprocesses[subprocess_id].process.subprocess_ids:
+				del subprocesses[jid]
 
 	async def onMessage(self, payload, isBinary):
 		msg = json.loads(payload.decode('utf8'))
-		job_id = msg["id"]
-		if job_id is not None:
+		subprocess_id = msg["id"]
+		if subprocess_id is not None:
 			self.last_pong_time = now()
 			try:
 				if not msg["error"]:
-					jobs[job_id].process.websocket.result_available(job_id,msg["result"],False)
-					jobs[job_id].process.websocket.job_ids.remove(job_id)
-					jobs[job_id].process.job_ids.remove(job_id)
-					del jobs[job_id]
+					subprocesses[subprocess_id].process.websocket.result_available(subprocess_id,msg["result"],False)
+					subprocesses[subprocess_id].process.websocket.subprocess_ids.remove(subprocess_id)
+					subprocesses[subprocess_id].process.subprocess_ids.remove(subprocess_id)
+					del subprocesses[subprocess_id]
 				else:
-					await self.job_fail(job_id)
+					await self.subprocess_fail(subprocess_id)
 			except KeyError:
 				pass
-			if job_id in self.job_ids:
-				self.job_ids.remove(job_id)
-		else: # This is an Idle Job!
+			if subprocess_id in self.subprocess_ids:
+				self.subprocess_ids.remove(subprocess_id)
+		else: # This is an Idle SubProcess!
 			if msg["result"] == IDLE_RESULT:
 				self.last_pong_time = now()
 
-	# Returns Job ids to revive
+	# Returns SubProcess ids to revive
 	async def cleanup(self):
 		if self in processor_websockets:
 			processor_websockets.remove(self)
-		for job_id in self.job_ids:
+		for subprocess_id in self.subprocess_ids:
 			try:
-				await self.job_fail(job_id)
+				await self.subprocess_fail(subprocess_id)
 			except KeyError:
 				pass
-		del self.job_ids[:]
+		del self.subprocess_ids[:]
 
 	async def onClose(self, wasClean, code, reason):
 		await self.cleanup()
@@ -170,8 +170,8 @@ class ClientProtocol(WebSocketServerProtocol):
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.job_ids = [] # For saving the Job ids requested by this Client
-		self.buff = [] # For buffering the Job results
+		self.subprocess_ids = [] # For saving the SubProcess ids requested by this Client
+		self.buff = [] # For buffering the SubProcess results
 		self.buff_size = 1
 		self.ip = None
 		self.ip_limit = None
@@ -179,25 +179,25 @@ class ClientProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
 		self.ip = request.peer.split(':')[1]
 		if self.ip not in ip_limit:
-			ip_limit[self.ip] = IpLimit(IP_DURATION_LIMIT,IP_JOB_COUNT_LIMIT)
+			ip_limit[self.ip] = IpLimit(IP_DURATION_LIMIT,IP_SUBPROCESS_COUNT_LIMIT)
 		# Each IP has a unique instance of IpLimit
 		self.ip_limit = ip_limit[self.ip]
 
 	def onOpen(self):
 		client_websockets.add(self)
 
-	def result_available(self,job_id,result,error):
-		if job_id in jobs:
+	def result_available(self,subprocess_id,result,error):
+		if subprocess_id in subprocesses:
 			if error:
 				try:
 					message = { "type": "result",
-								"results": [[None,jobs[job_id].identity]],
+								"results": [[None,subprocesses[subprocess_id].identity]],
 								"error": True }
 					self.sendMessage(json.dumps(message).encode('utf-8'),False)
 				except:
 					pass # None of our business!
 			else:
-				self.buff.append([result,jobs[job_id].identity])
+				self.buff.append([result,subprocesses[subprocess_id].identity])
 				if len(self.buff) >= self.buff_size:
 					self.flush()
 
@@ -215,7 +215,7 @@ class ClientProtocol(WebSocketServerProtocol):
 		try:
 			message = { "type": "info",
 						"processorsCount": len(processor_websockets),
-						"jobsCount": len(jobs) }
+						"subprocessesCount": len(subprocesses) }
 			self.sendMessage(json.dumps(message).encode('utf-8'),False)
 		except:
 			pass # None of our business!
@@ -229,15 +229,15 @@ class ClientProtocol(WebSocketServerProtocol):
 		except:
 			pass # None of our business!
 
-	async def new_job(self,identity,process,args):
-		global job_id_counter
+	async def new_subprocess(self,identity,process,args):
+		global subprocess_id_counter
 
 		if self.ip_limit.count < self.ip_limit.count_limit:
-			jobs[job_id_counter] = Job(identity,process,args)
-			process.job_ids.append(job_id_counter)
-			await job_id_queue.put(job_id_counter)
-			self.job_ids.append(job_id_counter)
-			job_id_counter += 1
+			subprocesses[subprocess_id_counter] = SubProcess(identity,process,args)
+			process.subprocess_ids.append(subprocess_id_counter)
+			await subprocess_id_queue.put(subprocess_id_counter)
+			self.subprocess_ids.append(subprocess_id_counter)
+			subprocess_id_counter += 1
 			self.ip_limit.count += 1
 			return False
 		else:
@@ -271,20 +271,20 @@ class ClientProtocol(WebSocketServerProtocol):
 
 			if msg["type"] == "run":
 				proc = Process(process_id_counter,msg["code"],self)
-				await self.new_job(msg["id"],proc,msg["args"])
+				await self.new_subprocess(msg["id"],proc,msg["args"])
 				process_id_counter += 1
 
 			elif msg["type"] == "for":
 				proc = Process(process_id_counter,msg["code"],self)
 				for i in range(msg["start"],msg["end"]):
-					if await self.new_job(msg["id"],proc,[i] + msg["extraArgs"]):
+					if await self.new_subprocess(msg["id"],proc,[i] + msg["extraArgs"]):
 						break
 				process_id_counter += 1
 
 			elif msg["type"] == "forEach":
 				proc = Process(process_id_counter,msg["code"],self)
 				for arg in msg["argsList"]:
-					if await self.new_job(msg["id"],proc,[arg] + msg["extraArgs"]):
+					if await self.new_subprocess(msg["id"],proc,[arg] + msg["extraArgs"]):
 						break
 				process_id_counter += 1
 
@@ -293,17 +293,17 @@ class ClientProtocol(WebSocketServerProtocol):
 		if self in client_websockets:
 			client_websockets.remove(self)
 
-		for j in self.job_ids:
+		for j in self.subprocess_ids:
 			try:
-				del jobs[j]
+				del subprocesses[j]
 			except KeyError:
 				pass
-		del self.job_ids[:]
+		del self.subprocess_ids[:]
 
-# Balance the Jobs between Processors
+# Balance the SubProcesses between Processors
 async def balancer():
 	while True:
-		job_id = await job_id_queue.get()
+		subprocess_id = await subprocess_id_queue.get()
 
 		# Wait for at least one Processor
 		await processor_exists.acquire()
@@ -311,18 +311,18 @@ async def balancer():
 		processor_exists.release()
 
 		websocket = random.sample(processor_websockets, 1)[0]
-		if len(websocket.job_ids) < MAX_JOB_PER_PROCESSOR:
-			if job_id in jobs:
+		if len(websocket.subprocess_ids) < MAX_SUBPROCESS_PER_PROCESSOR:
+			if subprocess_id in subprocesses:
 				try:
-					websocket.send_job(job_id, jobs[job_id].process.code, jobs[job_id].args, jobs[job_id].process.identity)
+					websocket.send_subprocess(subprocess_id, subprocesses[subprocess_id].process.code, subprocesses[subprocess_id].args, subprocesses[subprocess_id].process.identity)
 				except:
-					lg.debug("An exception occurred while sending a Job.")
-					await job_id_queue.put(job_id) # Revive the job
+					lg.debug("An exception occurred while sending a SubProcess.")
+					await subprocess_id_queue.put(subprocess_id) # Revive the subprocess
 		else:
-			await job_id_queue.put(job_id) # Revive the job
-			await asyncio.sleep(MAX_JOB_REACHED_REST_TIME) # It seems server is busy, sleep for a second!
+			await subprocess_id_queue.put(subprocess_id) # Revive the subprocess
+			await asyncio.sleep(MAX_SUBPROCESS_REACHED_REST_TIME) # It seems server is busy, sleep for a second!
 
-# Close not-responding sockets and revive Jobs
+# Close not-responding sockets and revive SubProcesses
 async def watcher():
 	while True:
 		must_close = []
@@ -343,9 +343,9 @@ async def idle():
 	while True:
 		for ws in processor_websockets:
 			try:
-				ws.send_job(IDLE_ID, IDLE_SCRIPT, IDLE_ARGS, IDLE_PROCESS_ID)
+				ws.send_subprocess(IDLE_ID, IDLE_SCRIPT, IDLE_ARGS, IDLE_PROCESS_ID)
 			except:
-				pass # No need to revive Idle Jobs!
+				pass # No need to revive Idle SubProcesses!
 		await asyncio.sleep(IDLE_INTERVAL)
 
 if __name__ == '__main__':

@@ -13,10 +13,10 @@
 		}
 
 		function now() { return new Date().getTime(); }
-		var MAX_JOB_TIME = 4000; // Maximum amount of time for a Worker to return the result in miliseconds
+		var MAX_SUBPROCESS_TIME = 4000; // Maximum amount of time for a Worker to return the result in miliseconds
 
 		var workerPool = [];
-		var jobs = [];
+		var subprocesses = [];
 		function fillPool() {
 			while(workerPool.length < navigator.hardwareConcurrency) {
 				var worker = createWorker(function(){
@@ -24,18 +24,18 @@
 					var lastProcessId = null;
 					var fn;
 					this.addEventListener("message", function(event) {
-						var job = event.data;
-						if(job.process_id != lastProcessId) {
-							var src = "fn = " + job.code;
+						var subprocess = event.data;
+						if(subprocess.process_id != lastProcessId) {
+							var src = "fn = " + subprocess.code;
 							eval(src);
-							lastProcessId = job.process_id;
+							lastProcessId = subprocess.process_id;
 						}
-						var job_result = { "id": job.id, "result": fn.apply(this, job.args), "error": false };
-						self.postMessage(job_result);
+						var subprocess_result = { "id": subprocess.id, "result": fn.apply(this, subprocess.args), "error": false };
+						self.postMessage(subprocess_result);
 					}, false);
 				});
-				worker.jobCreatedTime = null;
-				worker.job = null;
+				worker.subprocessCreatedTime = null;
+				worker.subprocess = null;
 				workerPool.push(worker);
 			}
 		}
@@ -49,51 +49,51 @@
 		function freeWorkersCount() {
 			var count = 0;
 			for(var i = 0; i < workerPool.length; i++) {
-				if(!workerPool[i].job) {
+				if(!workerPool[i].subprocess) {
 					count++;
 				}
 			}
 			return count;
 		}
 
-		// Notify that there is a free Worker to execute a new Job
+		// Notify that there is a free Worker to execute a new SubProcess
 		function notify() {
 			for(var i = 0; i < freeWorkersCount(); i++) {
-				var new_job = jobs.shift();
-				if(new_job)
-					balance(new_job,false);
+				var new_subprocess = subprocesses.shift();
+				if(new_subprocess)
+					balance(new_subprocess,false);
 			}
 		}
 
 		function response(event,worker) {
-			var job_result = event.data;
-			worker.jobCreatedTime = null;
-			worker.job = null;
-			sock.send(JSON.stringify(job_result));
+			var subprocess_result = event.data;
+			worker.subprocessCreatedTime = null;
+			worker.subprocess = null;
+			sock.send(JSON.stringify(subprocess_result));
 			notify(); // The Worker is now free
 		}
 
-		function balance(job,isnew) {
-			if(isnew && jobs.length > 0){ // Older undone Jobs have more priority than new Jobs
-				jobs.push(job);
-				job = jobs.shift();
+		function balance(subprocess,isnew) {
+			if(isnew && subprocesses.length > 0){ // Older undone SubProcesses have more priority than new SubProcesses
+				subprocesses.push(subprocess);
+				subprocess = subprocesses.shift();
 			}
 			var done = false;
-			// Find a free Worker and pass a Job to it
+			// Find a free Worker and pass a SubProcess to it
 			for(var i = 0; i < workerPool.length; i++) {
 				var w = workerPool[i];
-				if(!w.job) {
-					w.jobCreatedTime = now();
-					w.job = job;
+				if(!w.subprocess) {
+					w.subprocessCreatedTime = now();
+					w.subprocess = subprocess;
 					w.onmessage = function(event) { response(event,w); };
-					w.postMessage(job);
+					w.postMessage(subprocess);
 					done = true;
 					break;
 				}
 			}
-			// If there was no free Worker then push the job in the queue for further execution
+			// If there was no free Worker then push the subprocess in the queue for further execution
 			if(!done) {
-				jobs.push(job);
+				subprocesses.push(subprocess);
 			}
 		}
 
@@ -104,8 +104,8 @@
 			};
 
 			sock.onmessage = function(event) {
-				var job = JSON.parse(event.data);
-				balance(job,true);
+				var subprocess = JSON.parse(event.data);
+				balance(subprocess,true);
 			};
 
 			sock.onclose = function() {
@@ -115,27 +115,27 @@
 
 		startSocket();
 
-		// Kill the Workers running Jobs that take too long to respond
-		function badJobKiller() {
+		// Kill the Workers running SubProcesses that take too long to respond
+		function badSubProcessKiller() {
 			for(var i = 0; i < workerPool.length; i++) {
-				if(workerPool[i].jobCreatedTime) { // If the Worker is busy
-					if(now() - workerPool[i].jobCreatedTime > MAX_JOB_TIME) {
+				if(workerPool[i].subprocessCreatedTime) { // If the Worker is busy
+					if(now() - workerPool[i].subprocessCreatedTime > MAX_SUBPROCESS_TIME) {
 						var w = workerPool[i];
 						w.terminate();
 						workerPool.splice(i,1);
 						if(sock) {
-							var job_result = { "id": w.job.id, "result": null, "error": true };
-							// Send null as the result of Jobs taking too long to respond
-							sock.send(JSON.stringify(job_result));
+							var subprocess_result = { "id": w.subprocess.id, "result": null, "error": true };
+							// Send null as the result of SubProcesses taking too long to respond
+							sock.send(JSON.stringify(subprocess_result));
 						}
 					}
 				}
 			}
 			fillPool(); // Fill the pool as some Workers have been terminated and removed
 			notify();
-			setTimeout(badJobKiller, MAX_JOB_TIME/2);
+			setTimeout(badSubProcessKiller, MAX_SUBPROCESS_TIME/2);
 		}
 
-		badJobKiller();
+		badSubProcessKiller();
 	}
 }(this));
