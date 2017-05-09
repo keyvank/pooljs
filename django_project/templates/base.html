@@ -58,13 +58,13 @@
 		<script>
 			$(document).ready(function(){
 				var numWorkers = 0;
-				var numJobs = 0;
+				var numSubProcesses = 0;
 				function info(){
-					pool.oninfo = function(workersCount,jobsCount){
+					pool.oninfo = function(workersCount,subprocessesCount){
 						numWorkers = workersCount;
-						numJobs = jobsCount;
+						numSubProcesses = subprocessesCount;
 						$("#num-workers").text(numWorkers);
-						$("#num-jobs").text(numJobs);
+						$("#num-subprocesses").text(numSubProcesses);
 					}
 					pool.info();
 					setTimeout(info,5000);
