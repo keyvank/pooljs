@@ -21,11 +21,11 @@
 			while(workerPool.length < navigator.hardwareConcurrency) {
 				var worker = createWorker(function(){
 					var self = this;
-					var lastProcessId = null;
+					var lastProcessId = undefined;
 					var fn;
 					this.addEventListener("message", function(event) {
 						var subprocess = event.data;
-						if(subprocess.process_id != lastProcessId) {
+						if(subprocess.process_id !== lastProcessId) {
 							var src = "fn = " + subprocess.code;
 							eval(src);
 							lastProcessId = subprocess.process_id;
