@@ -8,6 +8,9 @@
 			pool.onlimit = function(remaining){
 				alert("You have reached your limit! " + (remaining/1000) + " seconds reamining...");
 			}
+			pool.onbusy = function(){
+				alert("Server is busy! Try again later!");
+			}
 			$("#custom-code-btn").click(function(){
 				$('#custom-code-result').empty();
 				var code = "var console = {log: function(str){$('#custom-code-result').append(str+' ');}}\n"+editor.getValue();

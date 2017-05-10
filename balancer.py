@@ -37,6 +37,8 @@ MAXIMUM_SUBPROCESS_CODE_REPEAT_COUNT = 32
 MAX_FAILURES = 4
 MAX_PROCESS_FAILURES = MAX_FAILURES * 5
 
+POOL_SUBPROCESS_CAPACITY = 10000
+
 IP_SUBPROCESS_COUNT_LIMIT = 1000
 IP_DURATION_LIMIT = 30000 # Milliseconds
 
@@ -232,8 +234,19 @@ class ClientProtocol(WebSocketServerProtocol):
 		except:
 			pass # None of our business!
 
+	def busy(self):
+		try:
+			message = { "type": "busy" }
+			self.sendMessage(json.dumps(message).encode('utf-8'),False)
+		except:
+			pass # None of our business!
+
 	async def new_subprocess(self,identity,process,args):
 		global subprocess_id_counter
+
+		if len(subprocesses) >= POOL_SUBPROCESS_CAPACITY:
+			self.busy()
+			return True
 
 		if self.ip_limit.count < self.ip_limit.count_limit:
 			subprocesses[subprocess_id_counter] = SubProcess(identity,process,args)

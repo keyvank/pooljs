@@ -10,6 +10,9 @@
 			pool.onlimit = function(remaining){
 				alert("You have reached your limit! " + (remaining/1000) + " seconds reamining...");
 			}
+			pool.onbusy = function(){
+				alert("Server is busy! Try again later!");
+			}
 			var ctx = document.getElementById("frame").getContext("2d");
 			var partsWidth = 30, partsHeight = 30;
 			var width = 360, height = 270;

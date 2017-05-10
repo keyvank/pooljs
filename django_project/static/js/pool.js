@@ -151,6 +151,12 @@
 					context.pool.onlimit(msg.remaining);
 				}
 			}
+
+			else if(msg.type == "busy") {
+				if("onbusy" in context.pool) {
+					context.pool.onbusy();
+				}
+			}
 		};
 
 		sock.onclose = function() {
