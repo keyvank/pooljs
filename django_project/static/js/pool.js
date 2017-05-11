@@ -148,7 +148,7 @@
 
 			else if(msg.type == "limit") {
 				if("onlimit" in context.pool) {
-					context.pool.onlimit(msg.remaining);
+					context.pool.onlimit(msg.remaining,msg.count,msg.countLimit);
 				}
 			}
 

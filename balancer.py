@@ -67,7 +67,7 @@ class IpLimit:
 	def __init__(self,duration_limit,count_limit):
 		self.duration_limit = duration_limit
 		self.count_limit = count_limit
-		self.expiry_time = None
+		self.begin_time = None
 		self.count = 0 # Count of SubProcesses ran by this IP since the last reset
 
 ip_limit = {} # Mapping IP as strings to IpLimits
@@ -227,9 +227,11 @@ class ClientProtocol(WebSocketServerProtocol):
 
 	def limit(self):
 		try:
-			remaining = self.ip_limit.duration_limit - now() + self.ip_limit.expiry_time
+			remaining = self.ip_limit.duration_limit - now() + self.ip_limit.begin_time
 			message = { "type": "limit",
-						"remaining": remaining }
+						"remaining": remaining,
+						"count": self.ip_limit.count,
+						"countLimit": self.ip_limit.count_limit }
 			self.sendMessage(json.dumps(message).encode('utf-8'),False)
 		except:
 			pass # None of our business!
@@ -243,23 +245,11 @@ class ClientProtocol(WebSocketServerProtocol):
 
 	async def new_subprocess(self,identity,process,args):
 		global subprocess_id_counter
-
-		if len(subprocesses) >= POOL_SUBPROCESS_CAPACITY:
-			self.busy()
-			return True
-
-		if self.ip_limit.count < self.ip_limit.count_limit:
-			subprocesses[subprocess_id_counter] = SubProcess(identity,process,args)
-			process.subprocess_ids.append(subprocess_id_counter)
-			await subprocess_id_queue.put(subprocess_id_counter)
-			self.subprocess_ids.append(subprocess_id_counter)
-			subprocess_id_counter += 1
-			self.ip_limit.count += 1
-			return False
-		else:
-			self.ip_limit.expiry_time = now()
-			self.limit()
-			return True
+		subprocesses[subprocess_id_counter] = SubProcess(identity,process,args)
+		process.subprocess_ids.append(subprocess_id_counter)
+		await subprocess_id_queue.put(subprocess_id_counter)
+		self.subprocess_ids.append(subprocess_id_counter)
+		subprocess_id_counter += 1
 
 	async def onMessage(self, payload, isBinary):
 		global process_id_counter
@@ -277,33 +267,44 @@ class ClientProtocol(WebSocketServerProtocol):
 				self.flush()
 
 		else:
-			if self.ip_limit.expiry_time:
-				if now() - self.ip_limit.expiry_time > self.ip_limit.duration_limit:
-					self.ip_limit.expiry_time = None
-					self.ip_limit.count = 0
-				else:
-					self.limit()
-					return
+			if not self.ip_limit.begin_time or now() - self.ip_limit.begin_time > self.ip_limit.duration_limit:
+				self.ip_limit.begin_time = now()
+				self.ip_limit.count = 0
 
 			if msg["type"] == "run":
-				proc = Process(process_id_counter,msg["code"],self)
-				await self.new_subprocess(msg["id"],proc,msg["args"])
-				process_id_counter += 1
+				if len(subprocesses) + 1 >= POOL_SUBPROCESS_CAPACITY:
+					self.busy()
+				elif self.ip_limit.count + 1 <= self.ip_limit.count_limit:
+					proc = Process(process_id_counter,msg["code"],self)
+					await self.new_subprocess(msg["id"],proc,ifmsg["args"])
+					self.ip_limit.count += 1
+					process_id_counter += 1
+				else:
+					self.limit()
 
 			elif msg["type"] == "for":
-				proc = Process(process_id_counter,msg["code"],self)
-				for i in range(msg["start"],msg["end"]):
-					if await self.new_subprocess(msg["id"],proc,[i] + msg["extraArgs"]):
-						break
-				process_id_counter += 1
+				if len(subprocesses) + (msg["end"] - msg["start"]) >= POOL_SUBPROCESS_CAPACITY:
+					self.busy()
+				elif self.ip_limit.count + (msg["end"] - msg["start"]) <= self.ip_limit.count_limit:
+					proc = Process(process_id_counter,msg["code"],self)
+					for i in range(msg["start"],msg["end"]):
+						await self.new_subprocess(msg["id"],proc,[i] + msg["extraArgs"])
+						self.ip_limit.count += 1
+					process_id_counter += 1
+				else:
+					self.limit()
 
 			elif msg["type"] == "forEach":
-				proc = Process(process_id_counter,msg["code"],self)
-				for arg in msg["argsList"]:
-					if await self.new_subprocess(msg["id"],proc,[arg] + msg["extraArgs"]):
-						break
-				process_id_counter += 1
-
+				if len(subprocesses) + len(msg["argsList"]) >= POOL_SUBPROCESS_CAPACITY:
+					self.busy()
+				elif self.ip_limit.count + len(msg["argsList"]) <= self.ip_limit.count_limit:
+					proc = Process(process_id_counter,msg["code"],self)
+					for arg in msg["argsList"]:
+						await self.new_subprocess(msg["id"],proc,[arg] + msg["extraArgs"])
+						self.ip_limit.count += 1
+					process_id_counter += 1
+				else:
+					self.limit()
 
 	async def onClose(self, wasClean, code, reason):
 		if self in client_websockets:

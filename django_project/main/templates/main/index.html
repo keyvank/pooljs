@@ -7,8 +7,8 @@
 	<script src="{% static 'js/smallpt.js' %}"></script>
 	<script>
 		$(document).ready(function(){
-			pool.onlimit = function(remaining){
-				alert("You have reached your limit! " + (remaining/1000) + " seconds reamining...");
+			pool.onlimit = function(remaining,count,limitCount){
+				alert("You have requested " + count + " out of " + limitCount + " SubProcesses.\nDecrease number of your SubProcesses or wait to reset.\n" + Math.ceil(remaining/1000) + " seconds to reset...");
 			}
 			pool.onbusy = function(){
 				alert("Server is busy! Try again later!");
