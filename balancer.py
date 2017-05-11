@@ -23,7 +23,7 @@ MAX_PONG_WAIT_TIME = 5000 # Milliseconds
 PING_INTERVAL = 5 # Seconds
 
 PROCESSOR_SUBPROCESS_BUFFER_LENGTH = 8
-PROCESSOR_SUBPROCESS_BUFFER_FULL_REST_TIME = 0.1 # Seconds
+BALANCER_BUSY_REST_TIME = 0.1 # Seconds
 
 IDLE_ID = None
 IDLE_PROCESS_ID = None
@@ -41,6 +41,9 @@ POOL_SUBPROCESS_CAPACITY = 10000
 
 CLIENT_IP_SUBPROCESS_COUNT_LIMIT = 1000
 CLIENT_IP_DURATION_LIMIT = 30000 # Milliseconds
+
+PROCESSOR_IP_SUBPROCESS_COUNT_LIMIT = 10000 # High for now!
+PROCESSOR_IP_DURATION_LIMIT = 30000 # Milliseconds
 
 SSL_CERT_FILE = '/etc/letsencrypt/live/pooljs.ir/cert.pem'
 SSL_KEY_FILE = '/etc/letsencrypt/live/pooljs.ir/privkey.pem'
@@ -70,7 +73,8 @@ class IpLimit:
 		self.begin_time = None
 		self.count = 0 # Count of SubProcesses ran by this IP since the last reset
 
-ip_limit = {} # Mapping IP as strings to IpLimits
+client_ip_limit = {} # Mapping IP as strings to IpLimits (Clients)
+processor_ip_limit = {} # Mapping IP as strings to IpLimits (Processors)
 subprocess_id_queue = asyncio.Queue() # Queue of requested SubProcess ids
 subprocess_id_counter = 0 # A counter for generating SubProcess ids
 process_id_counter = 0 # A counter for generating Process ids
@@ -92,6 +96,15 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		self.last_pong_time = None
 		self.last_process_id = None
 		self.last_process_id_repeat_count = 0
+		self.ip = None
+		self.ip_limit = None
+
+	def onConnect(self, request):
+		self.ip = request.peer.split(':')[1]
+		if self.ip not in processor_ip_limit:
+			processor_ip_limit[self.ip] = IpLimit(PROCESSOR_IP_DURATION_LIMIT,PROCESSOR_IP_SUBPROCESS_COUNT_LIMIT)
+		# Each IP has a unique instance of IpLimit
+		self.ip_limit = processor_ip_limit[self.ip]
 
 	def send_subprocess(self,subprocess_id,code,args,process_id):
 		if process_id == self.last_process_id:
@@ -183,10 +196,10 @@ class ClientProtocol(WebSocketServerProtocol):
 
 	def onConnect(self, request):
 		self.ip = request.peer.split(':')[1]
-		if self.ip not in ip_limit:
-			ip_limit[self.ip] = IpLimit(CLIENT_IP_DURATION_LIMIT,CLIENT_IP_SUBPROCESS_COUNT_LIMIT)
+		if self.ip not in client_ip_limit:
+			client_ip_limit[self.ip] = IpLimit(CLIENT_IP_DURATION_LIMIT,CLIENT_IP_SUBPROCESS_COUNT_LIMIT)
 		# Each IP has a unique instance of IpLimit
-		self.ip_limit = ip_limit[self.ip]
+		self.ip_limit = client_ip_limit[self.ip]
 
 	def onOpen(self):
 		client_websockets.add(self)
@@ -328,16 +341,21 @@ async def balancer():
 		processor_exists.release()
 
 		websocket = random.sample(processor_websockets, 1)[0]
-		if len(websocket.subprocess_ids) < PROCESSOR_SUBPROCESS_BUFFER_LENGTH:
+		if not websocket.ip_limit.begin_time or now() - websocket.ip_limit.begin_time > websocket.ip_limit.duration_limit:
+			websocket.ip_limit.begin_time = now()
+			websocket.ip_limit.count = 0
+
+		if len(websocket.subprocess_ids) < PROCESSOR_SUBPROCESS_BUFFER_LENGTH and websocket.ip_limit.count + 1 <= websocket.ip_limit.count_limit:
 			if subprocess_id in subprocesses:
 				try:
 					websocket.send_subprocess(subprocess_id, subprocesses[subprocess_id].process.code, subprocesses[subprocess_id].args, subprocesses[subprocess_id].process.identity)
 				except:
 					lg.debug("An exception occurred while sending a SubProcess.")
 					await subprocess_id_queue.put(subprocess_id) # Revive the subprocess
+				websocket.ip_limit.count += 1
 		else:
 			await subprocess_id_queue.put(subprocess_id) # Revive the subprocess
-			await asyncio.sleep(PROCESSOR_SUBPROCESS_BUFFER_FULL_REST_TIME) # It seems server is busy, sleep for a second!
+			await asyncio.sleep(BALANCER_BUSY_REST_TIME) # It seems server is busy, sleep for a second!
 
 # Close not-responding sockets and revive SubProcesses
 async def watcher():
