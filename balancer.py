@@ -22,8 +22,8 @@ CLIENTS_SERVER_PORT = 21212
 MAX_PONG_WAIT_TIME = 5000 # Milliseconds
 PING_INTERVAL = 5 # Seconds
 
-MAX_SUBPROCESS_PER_PROCESSOR = 8
-MAX_SUBPROCESS_REACHED_REST_TIME = 0.1 # Seconds
+PROCESSOR_SUBPROCESS_BUFFER_LENGTH = 8
+PROCESSOR_SUBPROCESS_BUFFER_FULL_REST_TIME = 0.1 # Seconds
 
 IDLE_ID = None
 IDLE_PROCESS_ID = None
@@ -39,8 +39,8 @@ MAX_PROCESS_FAILURES = MAX_FAILURES * 5
 
 POOL_SUBPROCESS_CAPACITY = 10000
 
-IP_SUBPROCESS_COUNT_LIMIT = 1000
-IP_DURATION_LIMIT = 30000 # Milliseconds
+CLIENT_IP_SUBPROCESS_COUNT_LIMIT = 1000
+CLIENT_IP_DURATION_LIMIT = 30000 # Milliseconds
 
 SSL_CERT_FILE = '/etc/letsencrypt/live/pooljs.ir/cert.pem'
 SSL_KEY_FILE = '/etc/letsencrypt/live/pooljs.ir/privkey.pem'
@@ -184,7 +184,7 @@ class ClientProtocol(WebSocketServerProtocol):
 	def onConnect(self, request):
 		self.ip = request.peer.split(':')[1]
 		if self.ip not in ip_limit:
-			ip_limit[self.ip] = IpLimit(IP_DURATION_LIMIT,IP_SUBPROCESS_COUNT_LIMIT)
+			ip_limit[self.ip] = IpLimit(CLIENT_IP_DURATION_LIMIT,CLIENT_IP_SUBPROCESS_COUNT_LIMIT)
 		# Each IP has a unique instance of IpLimit
 		self.ip_limit = ip_limit[self.ip]
 
@@ -328,7 +328,7 @@ async def balancer():
 		processor_exists.release()
 
 		websocket = random.sample(processor_websockets, 1)[0]
-		if len(websocket.subprocess_ids) < MAX_SUBPROCESS_PER_PROCESSOR:
+		if len(websocket.subprocess_ids) < PROCESSOR_SUBPROCESS_BUFFER_LENGTH:
 			if subprocess_id in subprocesses:
 				try:
 					websocket.send_subprocess(subprocess_id, subprocesses[subprocess_id].process.code, subprocesses[subprocess_id].args, subprocesses[subprocess_id].process.identity)
@@ -337,7 +337,7 @@ async def balancer():
 					await subprocess_id_queue.put(subprocess_id) # Revive the subprocess
 		else:
 			await subprocess_id_queue.put(subprocess_id) # Revive the subprocess
-			await asyncio.sleep(MAX_SUBPROCESS_REACHED_REST_TIME) # It seems server is busy, sleep for a second!
+			await asyncio.sleep(PROCESSOR_SUBPROCESS_BUFFER_FULL_REST_TIME) # It seems server is busy, sleep for a second!
 
 # Close not-responding sockets and revive SubProcesses
 async def watcher():
