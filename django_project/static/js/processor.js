@@ -120,9 +120,9 @@
 					sock.onmessage = function(event) {
 						var subprocess = JSON.parse(event.data);
 						if(subprocess.is_GPU) {
-							var size = subprocess.end - subprocess.start;;
+							var size = subprocess.args[1] - subprocess.args[0];
 							var foo = turbojs.alloc(size * 4);
-						  for (var i = 0; i < size; i++) foo.data[4*i] = subprocess.start + i;
+						  for (var i = 0; i < size; i++) foo.data[4*i] = subprocess.args[0] + i;
 						  turbojs.run(foo, subprocess.code +
 																'void main(void) { ' +
 																	'commit(f(int(read().r)));' +
