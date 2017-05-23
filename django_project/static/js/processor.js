@@ -59,6 +59,9 @@
 
 				var sock = null;
 
+				var lastGPUProcessId = undefined;
+				var lastGPUKernel = undefined;
+
 				function freeWorkersCount() {
 					var count = 0;
 					for(var i = 0; i < workerPool.length; i++) {
@@ -120,6 +123,12 @@
 					sock.onmessage = function(event) {
 						var subprocess = JSON.parse(event.data);
 						if(subprocess.is_GPU) {
+							if(subprocess.process_id == lastGPUProcessId)
+								subprocess.code = lastGPUKernel;
+							else {
+								lastGPUProcessId = subprocess.process_id;
+								lastGPUKernel = subprocess.code;
+							}
 							var size = subprocess.args[1] - subprocess.args[0];
 							var foo = turbojs.alloc(size * 4);
 						  for (var i = 0; i < size; i++) foo.data[4*i] = subprocess.args[0] + i;
