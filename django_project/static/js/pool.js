@@ -102,6 +102,19 @@
 					} };
 				}
 			},
+			forGPU: function(start, end, glsl, extraArgs = [], local = false) {
+				if(!local) {
+					var id = subprocessCounter++;
+					var message = { type: "forGPU",
+													start: start,
+													end: end,
+													code: glsl,
+													id: id };
+					return { result: function(callback) { listeners[id] = callback; sock.send(JSON.stringify(message)); } };
+				} else {
+					alert("Local forGPU not implemented yet!")
+				}
+			},
 			setBufferSize: function(size) {
 				var message = { type: "set",
 												property: "bufferSize",

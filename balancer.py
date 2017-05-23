@@ -48,10 +48,13 @@ PROCESSOR_IP_DURATION_LIMIT = 30000 # Milliseconds
 SSL_CERT_FILE = '/etc/letsencrypt/live/pooljs.ir/cert.pem'
 SSL_KEY_FILE = '/etc/letsencrypt/live/pooljs.ir/privkey.pem'
 
+GPU_SUBPROCESS_LIMIT = 100
+
 class Process:
 
-	def __init__(self,identity,code,websocket):
+	def __init__(self,identity,code,websocket,is_GPU):
 		self.identity = identity
+		self.is_GPU = is_GPU
 		self.code = code
 		self.websocket = websocket # SubProcess owner websocket
 		self.subprocess_ids = []
@@ -106,7 +109,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 		# Each IP has a unique instance of IpLimit
 		self.ip_limit = processor_ip_limit[self.ip]
 
-	def send_subprocess(self,subprocess_id,code,args,process_id):
+	def send_subprocess(self,subprocess_id,code,args,process_id,is_GPU):
 		if process_id == self.last_process_id:
 			self.last_process_id_repeat_count += 1
 		else:
@@ -114,7 +117,8 @@ class ProcessorProtocol(WebSocketServerProtocol):
 			self.last_process_id_repeat_count = 1
 		message = { "id": subprocess_id,
 					"process_id": process_id,
-					"args": args }
+					"args": args,
+					"is_GPU": is_GPU }
 		if self.last_process_id_repeat_count <= MAXIMUM_SUBPROCESS_CODE_REPEAT_COUNT:
 			message["code"] = code
 		if not self.last_ping_time or (self.last_pong_time and self.last_ping_time < self.last_pong_time):
@@ -125,7 +129,7 @@ class ProcessorProtocol(WebSocketServerProtocol):
 
 	async def onOpen(self):
 		# Check if Processor works with and Idle Process
-		self.send_subprocess(IDLE_ID,IDLE_SCRIPT,IDLE_ARGS,IDLE_PROCESS_ID)
+		self.send_subprocess(IDLE_ID,IDLE_SCRIPT,IDLE_ARGS,IDLE_PROCESS_ID,False)
 
 	async def subprocess_fail(self,subprocess_id):
 		subprocesses[subprocess_id].fails += 1
@@ -288,7 +292,7 @@ class ClientProtocol(WebSocketServerProtocol):
 				if len(subprocesses) + 1 >= POOL_SUBPROCESS_CAPACITY:
 					self.busy()
 				elif self.ip_limit.count + 1 <= self.ip_limit.count_limit:
-					proc = Process(process_id_counter,msg["code"],self)
+					proc = Process(process_id_counter,msg["code"],self,False)
 					await self.new_subprocess(msg["id"],proc,ifmsg["args"])
 					self.ip_limit.count += 1
 					process_id_counter += 1
@@ -299,7 +303,7 @@ class ClientProtocol(WebSocketServerProtocol):
 				if len(subprocesses) + (msg["end"] - msg["start"]) >= POOL_SUBPROCESS_CAPACITY:
 					self.busy()
 				elif self.ip_limit.count + (msg["end"] - msg["start"]) <= self.ip_limit.count_limit:
-					proc = Process(process_id_counter,msg["code"],self)
+					proc = Process(process_id_counter,msg["code"],self,False)
 					for i in range(msg["start"],msg["end"]):
 						await self.new_subprocess(msg["id"],proc,[i] + msg["extraArgs"])
 						self.ip_limit.count += 1
@@ -311,9 +315,23 @@ class ClientProtocol(WebSocketServerProtocol):
 				if len(subprocesses) + len(msg["argsList"]) >= POOL_SUBPROCESS_CAPACITY:
 					self.busy()
 				elif self.ip_limit.count + len(msg["argsList"]) <= self.ip_limit.count_limit:
-					proc = Process(process_id_counter,msg["code"],self)
+					proc = Process(process_id_counter,msg["code"],self,False)
 					for arg in msg["argsList"]:
 						await self.new_subprocess(msg["id"],proc,[arg] + msg["extraArgs"])
+						self.ip_limit.count += 1
+					process_id_counter += 1
+				else:
+					self.limit()
+
+			elif msg["type"] == "forGPU":
+				if len(subprocesses) + (msg["end"] - msg["start"]) / GPU_SUBPROCESS_LIMIT >= POOL_SUBPROCESS_CAPACITY:
+					self.busy()
+				elif self.ip_limit.count + (msg["end"] - msg["start"]) / GPU_SUBPROCESS_LIMIT <= self.ip_limit.count_limit:
+					proc = Process(process_id_counter,msg["code"],self,True)
+					ranges = list(range(msg["start"],msg["end"],GPU_SUBPROCESS_LIMIT)) + [msg["end"]]
+					ranges = zip(ranges[:-1],ranges[1:])
+					for s,e in ranges:
+						await self.new_subprocess(msg["id"],proc,[s,e])
 						self.ip_limit.count += 1
 					process_id_counter += 1
 				else:
@@ -348,7 +366,7 @@ async def balancer():
 		if len(websocket.subprocess_ids) < PROCESSOR_SUBPROCESS_BUFFER_LENGTH and websocket.ip_limit.count + 1 <= websocket.ip_limit.count_limit:
 			if subprocess_id in subprocesses:
 				try:
-					websocket.send_subprocess(subprocess_id, subprocesses[subprocess_id].process.code, subprocesses[subprocess_id].args, subprocesses[subprocess_id].process.identity)
+					websocket.send_subprocess(subprocess_id, subprocesses[subprocess_id].process.code, subprocesses[subprocess_id].args, subprocesses[subprocess_id].process.identity, subprocesses[subprocess_id].process.is_GPU)
 				except:
 					lg.debug("An exception occurred while sending a SubProcess.")
 					await subprocess_id_queue.put(subprocess_id) # Revive the subprocess
@@ -378,7 +396,7 @@ async def idle():
 	while True:
 		for ws in processor_websockets:
 			try:
-				ws.send_subprocess(IDLE_ID, IDLE_SCRIPT, IDLE_ARGS, IDLE_PROCESS_ID)
+				ws.send_subprocess(IDLE_ID, IDLE_SCRIPT, IDLE_ARGS, IDLE_PROCESS_ID, False)
 			except:
 				pass # No need to revive Idle SubProcesses!
 		await asyncio.sleep(IDLE_INTERVAL)
