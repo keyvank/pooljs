@@ -4,7 +4,7 @@
 	var WEBSOCKET_PORT = 12121;
 	var WEBSOCKET_ADDRESS = "wss://" + WEBSOCKET_HOST + ":" + WEBSOCKET_PORT;
 	var TURBOJS_URL = "https://turbo.github.io/js/turbo.js";
-	var GPU_SUBPROCESS_LIMIT = 100;
+
 	if(window && "WebSocket" in window && typeof(Worker) !== "undefined") {
 
 		function loadScript(url, callback)
@@ -120,15 +120,16 @@
 					sock.onmessage = function(event) {
 						var subprocess = JSON.parse(event.data);
 						if(subprocess.is_GPU) {
-							var foo = turbojs.alloc(GPU_SUBPROCESS_LIMIT * 4);
-						  for (var i = 0; i < GPU_SUBPROCESS_LIMIT; i++) foo.data[4*i] = i;
+							var size = subprocess.end - subprocess.start;;
+							var foo = turbojs.alloc(size * 4);
+						  for (var i = 0; i < size; i++) foo.data[4*i] = subprocess.start + i;
 						  turbojs.run(foo, subprocess.code +
 																'void main(void) { ' +
 																	'commit(f(int(read().r)));' +
   															'}');
-							var res = foo.data.subarray(0,GPU_SUBPROCESS_LIMIT * 4);
+							var res = foo.data.subarray(0,size * 4);
 							var arr = [];
-							for(var i=0;i<GPU_SUBPROCESS_LIMIT;i++)
+							for(var i=0;i<size;i++)
 								arr.push([res[4*i],res[4*i+1],res[4*i+2],res[4*i+3]]);
 							var subprocess_result = { "id": subprocess.id, "result": arr, "error": false };
 							sock.send(JSON.stringify(subprocess_result));
