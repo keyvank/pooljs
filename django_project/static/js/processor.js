@@ -132,15 +132,20 @@
 							var size = subprocess.args[1] - subprocess.args[0];
 							var foo = turbojs.alloc(size * 4);
 						  for (var i = 0; i < size; i++) foo.data[4*i] = subprocess.args[0] + i;
-						  turbojs.run(foo, subprocess.code +
-																'void main(void) { ' +
-																	'commit(f(int(read().r)));' +
-  															'}');
+							var has_error = false;
+							try {
+							  turbojs.run(foo, subprocess.code +
+																	'void main(void) { ' +
+																		'commit(f(int(read().r)));' +
+	  															'}');
+							} catch(err) {
+								has_error = true;
+							}
 							var res = foo.data.subarray(0,size * 4);
 							var arr = [];
 							for(var i=0;i<size;i++)
 								arr.push([res[4*i],res[4*i+1],res[4*i+2],res[4*i+3]]);
-							var subprocess_result = { "id": subprocess.id, "result": arr, "error": false };
+							var subprocess_result = { "id": subprocess.id, "result": has_error?null:arr, "error": has_error };
 							sock.send(JSON.stringify(subprocess_result));
 						} else
 							balance(subprocess,true);
