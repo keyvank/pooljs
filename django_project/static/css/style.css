@@ -303,6 +303,7 @@ body {
   margin-top: -50px; }
 
 #responsive-nav {
+  display: none;
   cursor: pointer;
   position: relative;
   top: 10px;
