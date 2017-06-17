@@ -7,6 +7,9 @@
   text-decoration: none;
   box-sizing: border-box; }
 
+body {
+  overflow-x: hidden; }
+
 #header {
   background-image: linear-gradient(134deg, #EC6161 2%, #B02A2A 99%);
   padding: 50px;
@@ -298,3 +301,10 @@
   color: #FFFFFF;
   letter-spacing: 0;
   margin-top: -50px; }
+
+#responsive-nav {
+  cursor: pointer;
+  position: relative;
+  top: 10px;
+  right: 30px;
+  float: right; }

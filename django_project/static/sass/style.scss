@@ -8,6 +8,10 @@
 	box-sizing: border-box;
 }
 
+body{
+	overflow-x: hidden
+}
+
 #header {
 	background-image: linear-gradient(134deg, #EC6161 2%, #B02A2A 99%);
 	padding: 50px;
@@ -175,31 +179,31 @@
 			color: #757575;
 			line-height: 25px;
 		}
-		.quote-footer{
+		.quote-footer {
 			display: inline-block;
 			margin-top: 10px;
-			.quote-writer-photo{
+			.quote-writer-photo {
 				width: 80px;
 				height: 80px;
 				overflow: hidden;
 				float: left;
-				img{
+				img {
 					width: 100%;
 					height: 100%;
 					object-fit: cover;
 				}
 			}
-			.quote-writer-info{
+			.quote-writer-info {
 				float: left;
 				text-align: left;
 				margin: 20px 0 0 20px;
-				h4{
+				h4 {
 					font-family: 'helvetica';
 					font-size: 17px;
 					color: #6B6B6B;
 					margin: 0;
 				}
-				span{
+				span {
 					display: block;
 					margin-top: -5px;
 					font-family: 'helvetica';
@@ -210,70 +214,71 @@
 		}
 	}
 }
-#imagine-section{
+
+#imagine-section {
 	background-image: url('../img/imagine.png');
 	background-size: cover;
 	background-repeat: no-repeat;
 	position: relative;
-	padding: 50px 0; 
-	&::after{
+	padding: 50px 0;
+	&::after {
 		content: '';
 		position: absolute;
 		right: 0;
 		left: 0;
 		top: 0;
 		bottom: 0;
-		background-image: radial-gradient(49% 268%, rgba(1,2,7,0.60) 50%, rgba(96,96,96,0.20) 100%);
+		background-image: radial-gradient(49% 268%, rgba(1, 2, 7, 0.60) 50%, rgba(96, 96, 96, 0.20) 100%);
 	}
-	#imagine-container{
+	#imagine-container {
 		text-align: center;
-		#imagine-title{
+		#imagine-title {
 			font-family: 'lalezar';
 			font-size: 40px;
 			color: #FFFFFF;
-			text-shadow: 0 0 15px rgba(0,0,0,0.50);
+			text-shadow: 0 0 15px rgba(0, 0, 0, 0.50);
 			margin-bottom: 20px;
 		}
-		p{
+		p {
 			font-family: 'helvetica';
 			font-size: 17px;
 			color: #FFFFFF;
 			margin: 0;
 		}
 	}
-
 }
-#preview-section{
+
+#preview-section {
 	padding: 50px 0;
 	background-image: linear-gradient(90deg, #343C4C 2%, #2C323E 100%);
-	.preview-title{
+	.preview-title {
 		text-align: center;
 		font-family: 'lalezar';
 		font-size: 30px;
 		color: #FFFFFF;
 		margin-bottom: 50px;
 	}
-	.preview-canvas{
+	.preview-canvas {
 		background: #242A34;
-		box-shadow: 0 0 35px 0 rgba(0,0,0,0.10);
+		box-shadow: 0 0 35px 0 rgba(0, 0, 0, 0.10);
 		border-radius: 10px;
 		width: 100%;
 	}
-	.preview-canvas-desc{
+	.preview-canvas-desc {
 		font-family: 'helvetica';
 		font-size: 16px;
 		color: #FFF;
 		text-align: center;
 		margin: 20px 0;
-		a{
+		a {
 			font-size: 17px;
 			color: #D75454;
-			font-family: 'lalezar';			
-		}		
+			font-family: 'lalezar';
+		}
 	}
-	.btn-pool{
+	.btn-pool {
 		background: #D75454;
-		box-shadow: 0 4px 15px 0 rgba(215,84,84,0.50);
+		box-shadow: 0 4px 15px 0 rgba(215, 84, 84, 0.50);
 		border-radius: 3px;
 		font-family: 'helvetica';
 		font-size: 16px;
@@ -282,37 +287,37 @@
 		display: inline-block;
 		cursor: pointer;
 		transition: all 400ms ease-in-out;
-		-webkit-transition: all 400ms ease-in-out;		
-		&:hover{
-			box-shadow: 0 4px 30px 0 rgba(215,84,84,0.70);			
+		-webkit-transition: all 400ms ease-in-out;
+		&:hover {
+			box-shadow: 0 4px 30px 0 rgba(215, 84, 84, 0.70);
 		}
-		&:not(:last-of-type){
+		&:not(:last-of-type) {
 			margin-right: 20px;
 		}
 	}
-	.pooljs-how{
+	.pooljs-how {
 		font-family: 'helvetica';
 		font-weight: bold;
 		font-size: 18px;
 		color: #FFFFFF;
 	}
-	#pooljs-how-desc{
+	#pooljs-how-desc {
 		font-family: 'helvetica';
 		font-size: 15px;
 		color: #FFFFFF;
 		padding-left: 30px;
 	}
-	#pooljs-usage{
+	#pooljs-usage {
 		list-style: none;
 		margin: 20px 0 0 0;
-		li{
+		li {
 			font-family: 'helvetica';
 			font-size: 16px;
 			color: #FFFFFF;
 			position: relative;
 			padding-left: 30px;
 			margin-bottom: 7px;
-			&::before{
+			&::before {
 				content: '';
 				position: absolute;
 				width: 10px;
@@ -325,32 +330,43 @@
 		}
 	}
 }
-.textalign-center{
+
+.textalign-center {
 	text-align: center;
 }
-#footer-index{
+
+#footer-index {
 	padding: 200px 0;
 	background-image: linear-gradient(269deg, #D75454 0%, #A23030 100%);
 	text-align: center;
-	.footer-header{
+	.footer-header {
 		font-family: 'menlo';
 		font-weight: bold;
 		font-size: 21px;
 		color: #FFFFFF;
 	}
-	#footer-editor{
+	#footer-editor {
 		margin-top: 30px;
 		border-radius: 6px;
 		overflow: hidden;
-		.cm-s-base16-dark.CodeMirror{
+		.cm-s-base16-dark.CodeMirror {
 			font-size: 25px;
 		}
 	}
 }
-#copyright{
+
+#copyright {
 	font-family: 'menlo';
 	font-size: 15px;
 	color: #FFFFFF;
 	letter-spacing: 0;
 	margin-top: -50px;
+}
+
+#responsive-nav {
+	cursor: pointer;
+	position: relative;
+	top: 10px;
+	right: 30px;
+	float: right;
 }

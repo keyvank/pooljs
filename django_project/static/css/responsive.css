@@ -1,0 +1,148 @@
+@media  (min-width: 0px) and (max-width: 480px) {
+	#navbar-ul {
+		float: right !important;
+		margin: 0 !important;
+		list-style: none !important;
+		position: absolute !important;
+		right: -60%;
+		top: 0 !important;
+		bottom: 0 !important;
+		background-color: #333 !important;
+		z-index: 99 !important;
+		width: 40% !important;
+		padding-top: 50px !important;
+		box-shadow: -10px 0px 60px rgba(0,0,0,0.7);
+	}
+	#navbar-ul li {
+		float: none !important;
+		display: inline-block !important;
+		width: 100% !important;
+		text-align: center !important;
+	}
+	#header #navbar #navbar-ul li.active a::after{
+		height: 0 !important;
+	}
+	#navbar-ul li.active{
+		background-color: #e35959;
+	}
+	#header #nav-top ul li:not(:last-of-type)::after{
+		opacity:0 !important;
+	}
+	#responsive-nav{
+		display: block !important;
+	}
+	#navbar-ul li a {
+		width: 100% !important;
+	}
+	#whatis-section{
+		padding: 250px 20px 50px !important;
+	}
+	.margintop-responsive{
+		margin-top: 50px;
+	}
+	.btn-pool{
+		margin-top: 20px;
+	}
+}
+
+ /**/
+
+@media  (min-width: 480px) and (max-width: 641px) {
+	#navbar-ul {
+		float: right !important;
+		margin: 0 !important;
+		list-style: none !important;
+		position: absolute !important;
+		right: -60%;
+		top: 0 !important;
+		bottom: 0 !important;
+		background-color: #333 !important;
+		z-index: 99 !important;
+		width: 40% !important;
+		padding-top: 50px !important;
+		box-shadow: -10px 0px 60px rgba(0,0,0,0.7);
+	}
+	#navbar-ul li {
+		float: none !important;
+		display: inline-block !important;
+		width: 100% !important;
+		text-align: center !important;
+	}
+	#header #navbar #navbar-ul li.active a::after{
+		height: 0 !important;
+	}
+	#navbar-ul li.active{
+		background-color: #e35959;
+	}
+	#header #nav-top ul li:not(:last-of-type)::after{
+		opacity:0 !important;
+	}
+	#responsive-nav{
+		display: block !important;
+	}
+	#navbar-ul li a {
+		width: 100% !important;
+	}
+	#whatis-section{
+		padding: 250px 20px 50px !important;
+	}
+	.margintop-responsive{
+		margin-top: 50px;
+	}
+}
+
+ /**/
+
+@media  (min-width: 641px) and (max-width: 961px) {
+	#navbar-ul {
+		float: right !important;
+		margin: 0 !important;
+		list-style: none !important;
+		position: absolute !important;
+		right: -60%;
+		top: 0 !important;
+		bottom: 0 !important;
+		background-color: #333 !important;
+		z-index: 99 !important;
+		width: 40% !important;
+		padding-top: 50px !important;
+		box-shadow: -10px 0px 60px rgba(0,0,0,0.7);
+	}
+	#navbar-ul li {
+		float: none !important;
+		display: inline-block !important;
+		width: 100% !important;
+		text-align: center !important;
+	}
+	#header #navbar #navbar-ul li.active a::after{
+		height: 0 !important;
+	}
+	#navbar-ul li.active{
+		background-color: #e35959;
+	}
+	#header #nav-top ul li:not(:last-of-type)::after{
+		opacity:0 !important;
+	}
+	#responsive-nav{
+		display: block !important;
+	}
+	#navbar-ul li a {
+		width: 100% !important;
+	}
+	#college-logos{display: none !important;}
+}
+
+ /**/
+
+@media  (min-width: 961px) and (max-width: 1025px) {
+
+}
+
+ /**/
+
+@media (min-width: 1025px) and (max-width: 1281px) {
+}
+/**/
+
+@media (min-width: 1281px) and (max-width: 1367px) {
+}
