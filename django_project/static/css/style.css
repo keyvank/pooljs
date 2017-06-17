@@ -8,7 +8,8 @@
   box-sizing: border-box; }
 
 body {
-  overflow-x: hidden; }
+  overflow-x: hidden;
+  position: relative; }
 
 #header {
   background-image: linear-gradient(134deg, #EC6161 2%, #B02A2A 99%);
@@ -300,7 +301,10 @@ body {
   font-size: 15px;
   color: #FFFFFF;
   letter-spacing: 0;
-  margin-top: -50px; }
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  right: 0; }
 
 #responsive-nav {
   display: none;
@@ -318,3 +322,13 @@ body {
 
 .margintop-15vh {
   margin-top: 15vh; }
+
+.feature-title {
+  text-align: center;
+  font-family: 'lalezar';
+  font-size: 80px; }
+
+.feature-desc {
+  text-align: center;
+  font-family: 'lalezar';
+  font-size: 26px; }
