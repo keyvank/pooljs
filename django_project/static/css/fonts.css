@@ -1,0 +1,31 @@
+@font-face {
+	font-family: "helvetica";
+	font-style: normal;
+	font-weight: normal;
+	src: url('../fonts/helvetica/Helvetica.eot');
+	src: url('../fonts/helvetica/Helvetica.eot?#iefix') format('embedded-opentype'),  /* IE6-8 */
+		 url('../fonts/helvetica/Helvetica.woff2') format('woff2'),  /* FF39+,Chrome36+, Opera24+*/
+		 url('../fonts/helvetica/Helvetica.woff') format('woff'),  /* FF3.6+, IE9, Chrome6+, Saf5.1+*/
+		 url('../fonts/helvetica/Helvetica.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'lalezar';
+  src: url('../fonts/lalezar/Lalezar-Regular.eot?#iefix') format('embedded-opentype'),
+       url('../fonts/lalezar/Lalezar-Regular.woff') format('woff'),
+	   url('../fonts/lalezar/Lalezar-Regular.ttf')  format('truetype'), 
+	   url('../fonts/lalezar/Lalezar-Regular.svg#Lalezar-Regular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+	font-family: "Menlo";
+	font-style: normal;
+	font-weight: normal;
+	src: url('../fonts/menlo/Menlo-Regular.eot');
+	src: url('../fonts/menlo/Menlo-Regular.eot?#iefix') format('embedded-opentype'),  /* IE6-8 */
+		 url('../fonts/menlo/Menlo-Regular.woff2') format('woff2'),  /* FF39+,Chrome36+, Opera24+*/
+		 url('../fonts/menlo/Menlo-Regular.woff') format('woff'),  /* FF3.6+, IE9, Chrome6+, Saf5.1+*/
+		 url('../fonts/menlo/Menlo-Regular.ttf') format('truetype');
+}

@@ -1,85 +1,86 @@
-<!DOCTYPE html>
-
-{% load staticfiles %}
+<!DOCTYPE html> {% load staticfiles %}
 
 <html>
-	<head>
-		<title>Pool.js - Browser Computing Unleashed</title>
 
-		<meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1,shrink-to-fit=no">
-    <meta http-equiv="x-ua-compatible" content="ie-edge">
+<head>
+	<title>Pool.js - Browser Computing Unleashed</title>
 
-		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.min.css" />
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/theme/base16-dark.min.css" />
-		<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
-		<link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1,shrink-to-fit=no">
+	<meta http-equiv="x-ua-compatible" content="ie-edge">
 
-		{% block head %} {% endblock %}
-	</head>
-	<body>
-		<nav class="navbar navbar-toggleable-md navbar-inverse fixed-top" style="background-color:#0275d8;">
-		  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-		    <span class="navbar-toggler-icon"></span>
-		  </button>
-		  <a class="navbar-brand" href="{% url 'main_index' %}">Pool.js</a>
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.3.1/css/foundation.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.min.css" />
+	<link rel="stylesheet" href="{% static 'css/codemirror-pooljs.css' %}" />
+	<link rel="stylesheet" href="{% static 'css/style.css' %}" /> {% block head %} {% endblock %}
+</head>
 
-		  <div class="collapse navbar-collapse" id="navbarSupportedContent">
-		    <ul class="navbar-nav mr-auto">
-		      <li class="nav-item {% if request.path == '/' %}active{% endif %}">
-		        <a class="nav-link" href="{% url 'main_index' %}">Home</a>
-		      </li>
-		      <li class="nav-item {% if request.path == '/sandbox/' %}active{% endif %}">
-		        <a class="nav-link" href="{% url 'main_sandbox' %}">Sandbox</a>
-		      </li>
-		      <li class="nav-item">
-		        <a class="nav-link" href="https://github.com/keyvank/pooljs#pooljs">Docs</a>
-		      </li>
-					<li class="nav-item {% if request.path == '/featured/' %}active{% endif %}">
-		        <a class="nav-link" href="{% url 'main_featured' %}">Featured</a>
-		      </li>
-		    </ul>
-				<div style="overflow:hidden;margin-top:5px;">
-					<a class="github-button" href="https://github.com/keyvank/pooljs" data-style="mega" data-count-href="/keyvank/pooljs/stargazers" data-count-api="/repos/keyvank/pooljs#stargazers_count" data-count-aria-label="# stargazers on GitHub" aria-label="Star keyvank/pooljs on GitHub">Star</a>
+<body>
+	<header id="header">
+		<div class="row">
+			<nav id="navbar">
+				<a id="logotype-nav" href="{% url 'main_index' %}">Pool.js</a>
+				<ul id="navbar-ul">
+					<li class="{% if request.path == '/' %}active{% endif %}">
+						<a class="nav-link" href="{% url 'main_index' %}">Home</a>
+					</li>
+					<li class="{% if request.path == '/sandbox/' %}active{% endif %}">
+						<a class="nav-link" href="{% url 'main_sandbox' %}">Sandbox</a>
+					</li>
+					<li>
+						<a class="nav-link" href="https://github.com/keyvank/pooljs#pooljs">Docs</a>
+					</li>
+					<li class="{% if request.path == '/featured/' %}active{% endif %}">
+						<a class="nav-link" href="{% url 'main_featured' %}">Featured</a>
+					</li>
+				</ul>
+				<div id="git-star">
+					<a class="github-button" href="https://github.com/keyvank/pooljs" data-style="mega" data-count-href="/keyvank/pooljs/stargazers"
+						data-count-api="/repos/keyvank/pooljs#stargazers_count" data-count-aria-label="# stargazers on GitHub" aria-label="Star keyvank/pooljs on GitHub">Star</a>
 				</div>
-		  </div>
-		</nav>
+			</nav>
+		</div>
+	
 
-		{% block body %} {% endblock %}
+	{% block body %} {% endblock %} {% block footer %}
+	<div class="text-center m-2" id="copyright">Copyright (C) 2017 - Keyvan M. Kambakhsh</div>
+	{% endblock %}
 
-		{% block footer %}
-			<div class="text-center m-2">Copyright (C) 2017 - Keyvan M. Kambakhsh</div>
-		{% endblock %}
+	<script src="{% static 'js/processor.js' %}"></script>
+	<script src="{% static 'js/pool.js' %}"></script>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+	    crossorigin="anonymous"></script>
+	<script>
+		$(document).ready(function () {
+			var numWorkers = 0;
+			var numSubProcesses = 0;
 
-		<script src="{% static 'js/processor.js' %}"></script>
-		<script src="{% static 'js/pool.js' %}"></script>
-		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-		<script>
-			$(document).ready(function(){
-				var numWorkers = 0;
-				var numSubProcesses = 0;
-				function info(){
-					pool.oninfo = function(workersCount,subprocessesCount){
-						numWorkers = workersCount;
-						numSubProcesses = subprocessesCount;
-						$("#num-workers").text(numWorkers);
-						$("#num-subprocesses").text(numSubProcesses);
-					}
-					pool.info();
-					setTimeout(info,5000);
+			function info() {
+				pool.oninfo = function (workersCount, subprocessesCount) {
+					numWorkers = workersCount;
+					numSubProcesses = subprocessesCount;
+					$("#num-workers").text(numWorkers);
+					$("#num-subprocesses").text(numSubProcesses);
 				}
-				pool.onopen = function(){info();}
-			});
-		</script>
+				pool.info();
+				setTimeout(info, 5000);
+			}
+			pool.onopen = function () {
+				info();
+			}
+		});
+	</script>
 
-		<script async defer src="https://buttons.github.io/buttons.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha256-gL1ibrbVcRIHKlCO5OXOPC/lZz/gpdApgQAzskqqXp8=" crossorigin="anonymous"></script>
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/javascript/javascript.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/xml/xml.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/htmlmixed/htmlmixed.min.js"></script>
-		{% block scripts %} {% endblock %}
-	</body>
+	<script async defer src="https://buttons.github.io/buttons.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha256-gL1ibrbVcRIHKlCO5OXOPC/lZz/gpdApgQAzskqqXp8="
+	    crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"
+	    crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/codemirror.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/javascript/javascript.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/xml/xml.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.2/mode/htmlmixed/htmlmixed.min.js"></script>
+	{% block scripts %} {% endblock %}
+</body>
+
 </html>
