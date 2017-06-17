@@ -95,3 +95,7 @@ ENV/
 .ropeproject
 db.sqlite3
 migrations/
+
+
+
+django_project/static/node_modules
