@@ -22,6 +22,7 @@
 				theme: "base16-dark"
 		  });
 			editor.setSize("100%","50vh");
+			$("#header").addClass('fullheight');
 		});
 	</script>
 {% endblock %}
@@ -29,16 +30,18 @@
 
 {% block body %}
 	{{ block.super }}
-	<div class="container">
+	<div class="container zindex-9">
 		<div class="row">
-			<div class="col-md-12" style="font-size:18px; margin-top:15vh;">
+			<div  id="code-editor" class="margintop-15vh">
 				<textarea id="header-editor" style="height:auto;">pool.for(0,10,function(i){
   return i*i;
 }).result(function(result){
   console.log(result);
 });</textarea>
-				<div id="custom-code-result" class="p-2" style="background:black;color:white;height:20vh;font-size:20px;"></div>
-				<button id="custom-code-btn" class="btn btn-danger" style="margin:10px;">Run!</button>
+				<div id="result-code-editor">
+						<div id="custom-code-result" class="p-2"></div>
+						<button id="custom-code-btn">Run!</button>
+					</div>
 			</div>
 		</div>
 	</div>
