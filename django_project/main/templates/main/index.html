@@ -61,7 +61,7 @@
 				theme: "base16-dark",
 				scrollbarStyle: "null"
 		  });
-			editor2.setSize("100%","54px");
+			editor2.setSize("100%","100px");
 		});
 	</script>
 {% endblock %}
@@ -69,74 +69,90 @@
 
 {% block body %}
 	{{ block.super }}
-	<div class="container-fluid" style="padding-bottom:15vh;">
-		<div class="row">
-			<div class="offset-md-1 col-md-4" style="margin-top:30vh;">
-				<img style="width:40%; margin-left:auto; margin-right:auto;display:block;" src="{% static 'img/logo.svg' %}" alt="Pool.js"/>
-				<h1 class="display-4 text-center">Pool.js</h1>
-				<h2 class="display-5 text-center">Browser computing unleashed!</h2>
-				<div class="text-center">Processors available: <span id="num-workers">0</span></div>
-				<div class="text-center">SubProcesses count: <span id="num-subprocesses">0</span></div>
+	
+		<div class="row margintop-200" id="header-container">
+			<div class="medium-3 columns">
+				<h1 class="pooljs">Pool.js</h1>
+				<span class="pooljs-desc">Browser computing unleashed!</span>
+				<div class="margintop-20">
+					<div class="process-div">Processors available: <span class="process-count" id="num-workers">0</span></div>
+					<div class="process-div">SubProcesses count: <span class="process-count" id="num-subprocesses">0</span></div>
+				</div>
 			</div>
-			<div class="offset-md-1 col-md-5" style="margin-top:25vh;font-size:18px;">
-				<textarea id="header-editor" style="height:auto;">pool.for(0,10,function(i){
-  return i*i;
+			<div class="medium-7 columns zindex-9">
+				<div id="code-editor">
+					<textarea id="header-editor" style="height:auto;">pool.for(0,10,function(i){
+	return i*i;
 }).result(function(result){
-  console.log(result);
+	console.log(result);
 });</textarea>
-				<div id="custom-code-result" class="p-2" style="background:black;color:white;height:80px;font-size:20px;overflow-y:auto"></div>
-				<button id="custom-code-btn" class="btn btn-danger" style="margin:10px;">Run!</button>
+					<div id="result-code-editor">
+						<div id="custom-code-result" class="p-2"></div>
+						<button id="custom-code-btn">Run!</button>
+					</div>
+				</div>
 			</div>
 		</div>
-	</div>
-
-	<div class="container-fluid" style="padding-top:12vh;padding-bottom:40vh;background-color:#001527;">
+	
+</header>
+	<section id="whatis-section">
 		<div class="row">
-			<div class="col-md-12">
-				<h2 style="text-align:center;" class="m-2">What is Pool.js?</h2>
-				<h3 style="text-align:center;">Pool.js is a platform for distributing many small processes on web browsers!</h3>
+			<div class="column">
+				<h3 class="m-2 section-title">What is Pool.js?</h3>
+				<p class="section-desc">Pool.js is a platform for distributing many small processes on web browsers!</p>
 			</div>
 		</div>
-		<div class="row" style="padding-top:18vh;">
-			<div class="offset-md-1 col-md-2 hidden-md-down">
-				<img class="img-circle" style="width:90%;" src="http://www.piedpiper.com/app/themes/pied-piper/dist/images/richard.png" alt="Richard Hendricks"/>
-			</div>
-			<div class="col-md-8">
-				<blockquote class="blockquote" style="display:block;margin-left:auto;margin-right:auto;text-align:justify;">
-				  <p class="mb-0">“ We put a man on the moon using the computing power of a handheld calculator;
+		<div class="row">
+			<div class="quote-item medium-6 medium-centered">
+				<p>
+					“ We put a man on the moon using the computing power of a handheld calculator;
 													There’s literally millions of times more computing power in my phone, and that's
 													just sitting in my pocket doing nothing. So then I thought there's, what,
 													billions of phones all over the world with the same computing power just sitting
-													in peoples' pockets. ”</p>
-				  <footer class="blockquote-footer">Richard Hendricks - Founder of <cite title="Pied Piper"><a href="http://www.piedpiper.com/">Pied Piper</a></cite></footer>
-				</blockquote>
+													in peoples' pockets. ”
+				</p>
+				<footer class="quote-footer">
+					<figure class="quote-writer-photo">
+						<img src="http://www.piedpiper.com/app/themes/pied-piper/dist/images/richard.png" alt="Richard Hendricks"/>
+					</figure>
+					<div class="quote-writer-info">
+						<h4>Richard Hendricks</h4>
+						<span>Founder of Pied Piper</span>
+					</div>
+				</footer>
 			</div>
 		</div>
+	</section>
+	<section id="imagine-section">
 		<div class="row">
-			<div class="col-md-12" style="padding-top:18vh;">
-				<h2 style="text-align:center;" class="m-4">Imagine a big computational problem!</h2>
-				<h3 style="text-align:center;">Divide the problem into many smaller parts and distribute them between web browsers.</h3>
-				<h3 style="text-align:center;">You will get the answer within seconds!</h3>
+			<div id="imagine-container" class="zindex-9">
+				<h2 id="imagine-title" class="m-4">Imagine a big computational problem!</h2>
+				<p>Divide the problem into many smaller parts and distribute them between web browsers.</p>
+				<p>You will get the answer within seconds!</p>
 			</div>
 		</div>
-	</div>
-
-	<div class="container-fluid" style="padding-bottom:5vh;padding-top:5vh;background-color:black;">
+	</section>
+	<section id="preview-section">
 		<div class="row">
-			<div class="col-md-5" style="text-align:center;color:#DDD">
-				<h2 style="text-align:center;color:white;">Photorealistic 3D Rendering</h2>
-				<canvas id="frame" width="360" height="270" style="border:1px solid #000000;margin-left:auto;margin-right:auto;display:block;width:90%;background-color:#111;" class="mt-4 mb-1">
+			<h3 class="preview-title">Photorealistic 3D Rendering</h3>
+			<div class="medium-6 columns">
+				<canvas id="frame" width="360" height="270" class="mt-4 mb-1 preview-canvas">
 				</canvas>
-				<p class="mb2"><a href="http://www.kevinbeason.com/smallpt/">smallpt</a> and its <a href="http://blog.ivank.net/smallpt-in-javascript.html">JS implementation</a> on pool.js</p>
-				<button id="rayTracer-btn-single" class="btn btn-primary m-1">Run on a single browser!</button>
-				<button id="rayTracer-btn" class="btn btn-primary m-1">Run on the pool!</button>
+				<p class="mb2 preview-canvas-desc">
+					<a href="http://www.kevinbeason.com/smallpt/">smallpt</a> and its <a href="http://blog.ivank.net/smallpt-in-javascript.html">JS implementation</a> on pool.js</p>
+				<div class="textalign-center">
+				<button id="rayTracer-btn-single" class="m-1 btn-pool">Run on a single browser!</button>
+				<button id="rayTracer-btn" class="m-1 btn-pool">Run on the pool!</button>
+				</div>
 			</div>
-			<div class="offset-md-1 col-md-6 m-4">
-				<h2 style="color:white;">How <i>Distributed Browser Computing</i> can change the world?</h2>
-				<p>There are tons of algorithms which can be distributed between many computers and run enormously faster!</p>
-				<p>Using the power of web and browsers, we can bring supercomputing to the public!</p>
-				<p>Pool.js can help us:</p>
-				<ul>
+			<div class="medium-6 columns m-4 margintop-responsive">
+				<h2 class="pooljs-how">How <i>Distributed Browser Computing</i> can change the world?</h2>
+				<p id="pooljs-how-desc">There are tons of algorithms which can be distributed between many computers and run enormously faster!
+					<br/>
+				Using the power of web and browsers, we can bring supercomputing to the public!</p>
+					
+				<span class="pooljs-how">Pool.js can help us:</span>
+				<ul id="pooljs-usage">
 					<li>Do 3D rendering</li>
 					<li>Crack passwords</li>
 					<li>Recognite faces and fingerprints</li>
@@ -149,17 +165,15 @@
 				</ul>
 			</div>
 		</div>
-	</div>
-	<div class="container-fluid" style="padding-top:30vh;padding-bottom:40vh;">
+	</section>
+	<footer id="footer-index">
 		<div class="row">
-			<div class="col-md-12">
-				<h2 style="text-align:center;">So let's make the world a better place to live!</h2>
-				<h3 style="text-align:center;">Put this script in your website!</h3>
-				<div style="font-size:28px;text-align:center;overflow:hidden;max-width:90%;margin:0 auto;">
+				<h3 class="footer-header">So let's make the world a better place to live!</h3>
+				<h5 class="footer-header">Put this script in your website!</h5>
+				<div id="footer-editor" class="medium-11 medium-centered" style="font-size:30px;">
 					<textarea id="put-script" style="height:auto;">&lt;script src="https://pooljs.ir/static/js/processor.js"&gt;&lt;/script&gt;</textarea>
 				</div>
 			</div>
-		</div>
-	</div>
+	</footer>
 
 {% endblock %}

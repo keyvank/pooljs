@@ -13,17 +13,19 @@
 				var code = "var console = {log: function(str){$('.custom-code-result').append(str+'<br>');}}\n"+$(".custom-code").val();
 				eval(code);
 			});
+						$("#header").addClass('fullheight');
+
 		});
 	</script>
 {% endblock %}
 
 
 {% block body %}
-	<div class="container" style="margin-top:45vh;margin-bottom:45vh;">
+	<div class="container">
 		<div class="row">
-			<div class="col-md-12">
-				<h2 style="text-align:center;">Featured Projects!</h2>
-				<h3 style="text-align:center;">We'll put latest cool projects made on top of Pool.js here!</h3>
+			<div  style="margin-top:25vh;">
+				<h2 class="feature-title">Featured Projects!</h2>
+				<p  class="feature-desc">We'll put latest cool projects made on top of Pool.js here!</p>
 			</div>
 		</div>
 	</div>
