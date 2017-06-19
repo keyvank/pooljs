@@ -1,4 +1,7 @@
 @media  (min-width: 0px) and (max-width: 480px) {
+	#header{
+		height: 950px !important;
+	}
 	#navbar-ul {
 		float: right !important;
 		margin: 0 !important;
@@ -48,6 +51,9 @@
  /**/
 
 @media  (min-width: 480px) and (max-width: 641px) {
+	#header{
+		height: 950px !important;
+	}
 	#navbar-ul {
 		float: right !important;
 		margin: 0 !important;
@@ -94,6 +100,9 @@
  /**/
 
 @media  (min-width: 641px) and (max-width: 961px) {
+	#header{
+		height: 950px !important;
+	}
 	#navbar-ul {
 		float: right !important;
 		margin: 0 !important;

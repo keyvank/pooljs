@@ -16,7 +16,8 @@ body {
   padding: 50px;
   height: 750px;
   color: #fff;
-  position: relative; }
+  position: relative;
+  overflow-x: hidden; }
   #header #navbar #logotype-nav {
     font-family: "lalezar" !important;
     font-size: 40px;
