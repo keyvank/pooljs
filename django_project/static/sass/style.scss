@@ -8,9 +8,10 @@
 	box-sizing: border-box;
 }
 
-body {
+html,body {
 	overflow-x: hidden;
 	position: relative;
+	max-width: 100%;
 }
 
 #header {
@@ -19,7 +20,6 @@ body {
 	height: 750px;
 	color: #fff;
 	position: relative;
-	overflow-x: hidden;
 	#navbar {
 		#logotype-nav {
 			font-family: "lalezar" !important;
