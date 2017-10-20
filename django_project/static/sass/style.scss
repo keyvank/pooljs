@@ -1,4 +1,6 @@
 @import 'fonts.css';
+
+$base_dark_color: #2C323E;
 * {
 	padding: 0;
 	margin: 0;
@@ -118,7 +120,7 @@ html,body {
 	border-radius: 10px;
 	overflow: hidden;
 	#result-code-editor {
-		background: #2C323E;
+		background: $base_dark_color;
 		padding: 27px 20px;
 		height: 80px;
 		position: relative;
@@ -253,7 +255,7 @@ html,body {
 
 #preview-section {
 	padding: 50px 0;
-	background-image: linear-gradient(90deg, #343C4C 2%, #2C323E 100%);
+	background-image: linear-gradient(90deg, #343C4C 2%, $base_dark_color 100%);
 	.preview-title {
 		text-align: center;
 		font-family: 'lalezar';
